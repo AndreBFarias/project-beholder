@@ -151,8 +151,9 @@ class CacadaPage(Gtk.Box):
         self._btn_cancelar.set_visible(True)
         self._entry_url.set_sensitive(False)
 
-        self._spider.iniciar(url)
-        logger.info("Caçada iniciada: %s", url)
+        modo_furtivo = self._toggle_furtivo.get_active()
+        self._spider.iniciar(url, modo_furtivo=modo_furtivo)
+        logger.info("Caçada iniciada: %s (furtivo=%s)", url, modo_furtivo)
 
     def _on_pausar(self, _btn: Gtk.Button) -> None:
         """Alterna entre pausar e retomar o spider."""
