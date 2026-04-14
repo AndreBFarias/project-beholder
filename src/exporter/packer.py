@@ -1,7 +1,7 @@
 """
 Packer — Thread C do pipeline produtor-consumidor.
 
-Consome AssetProcessado de fila_processada, organiza em subpastas por tipo
+Consome AssetProcessado de filas.processada, organiza em subpastas por tipo
 (icons/, backgrounds/, outros/) e compacta em output/beholder_{timestamp}.zip.
 
 ADR-01: callbacks de UI sempre via GLib.idle_add.
@@ -17,7 +17,7 @@ from pathlib import Path
 
 from gi.repository import GLib
 
-from src.core.asset_queue import SENTINEL, AssetProcessado, fila_processada
+from src.core.asset_queue import SENTINEL, AssetProcessado, filas
 from src.core.config.defaults import DEFAULTS
 from src.exporter.dataset_writer import escrever_csv, subpasta_tipo
 
@@ -71,14 +71,14 @@ class Packer:
     # ------------------------------------------------------------------
 
     def _executar(self) -> None:
-        """Consome fila_processada até SENTINEL e gera pacote."""
+        """Consome filas.processada até SENTINEL e gera pacote."""
         assets: list[AssetProcessado] = []
         timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         staging = self._dir_output / f"staging_{timestamp}"
 
         try:
             while True:
-                item = fila_processada.get()
+                item = filas.processada.get()
                 if item is SENTINEL:
                     logger.info("Packer recebeu SENTINEL — encerrando")
                     break

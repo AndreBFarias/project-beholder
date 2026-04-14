@@ -17,7 +17,7 @@ from pathlib import Path
 
 from gi.repository import Gtk
 
-from src.core.asset_queue import AssetProcessado, fila_processada
+from src.core.asset_queue import AssetProcessado, filas
 from src.core.config.defaults import DEFAULTS
 from src.exporter.dataset_writer import escrever_csv
 from src.exporter.packer import Packer
@@ -184,11 +184,16 @@ class EspolioPage(Gtk.Box):
         self._btn_gerar.set_sensitive(False)
         self._cb_log("[INFO] Iniciando empacotamento...")
 
-        # Se há assets em memória, posta na fila + SENTINEL para o Packer consumir
         if self._assets:
+            # Drena resíduos de sessões anteriores da fila processada
+            while not filas.processada.empty():
+                try:
+                    filas.processada.get_nowait()
+                except Exception:
+                    break
             for asset in self._assets:
-                fila_processada.put(asset)
-            fila_processada.put(None)  # SENTINEL
+                filas.processada.put(asset)
+            filas.processada.put(None)  # SENTINEL
             self._packer.iniciar()
         else:
             self._cb_log("[AVISO] Nenhum asset disponível para empacotar.")

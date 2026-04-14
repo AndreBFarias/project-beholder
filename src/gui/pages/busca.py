@@ -14,6 +14,7 @@ import logging
 
 from gi.repository import Gtk
 
+from src.core.asset_queue import filas
 from src.gui.widgets import LogTerminal
 from src.scraper.stealth_spider import StealthSpider
 
@@ -153,6 +154,7 @@ class CacadaPage(Gtk.Box):
         self._entry_url.set_sensitive(False)
 
         modo_furtivo = self._toggle_furtivo.get_active()
+        filas.nova_sessao()
         self._spider.iniciar(url, modo_furtivo=modo_furtivo)
         logger.info("Caçada iniciada: %s (furtivo=%s)", url, modo_furtivo)
 

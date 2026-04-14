@@ -14,8 +14,8 @@ Fluxo:
             → _get_com_retry(url) ou _get_playwright(url)  → HTML
             → extrair_assets(html, url)  → list[AssetBruto]
             → _baixar_asset(asset)  → Path
-            → fila_scraper.put(asset)
-        → fila_scraper.put(SENTINEL)  → sinaliza fim para Thread B
+            → filas.scraper.put(asset)
+        → filas.scraper.put(SENTINEL)  → sinaliza fim para Thread B
 """
 
 import logging
@@ -29,7 +29,7 @@ from urllib.parse import urlparse
 import requests
 from gi.repository import GLib
 
-from src.core.asset_queue import SENTINEL, AssetBruto, fila_scraper
+from src.core.asset_queue import SENTINEL, AssetBruto, filas
 from src.core.config.defaults import DEFAULTS
 from src.scraper.html_parser import extrair_assets
 
@@ -205,7 +205,7 @@ class StealthSpider:
                 caminho = self._baixar_asset(asset, dir_saida)
                 if caminho:
                     asset.caminho_local = str(caminho)
-                    fila_scraper.put(asset)
+                    filas.scraper.put(asset)
                     total_baixados += 1
                     self._log(f"[OK] {asset.tipo.upper()} — {asset.url}")
                 else:
@@ -219,7 +219,7 @@ class StealthSpider:
             logger.exception("Erro inesperado no StealthSpider")
             self._log(f"[ERRO] Exceção inesperada: {exc}")
         finally:
-            fila_scraper.put(SENTINEL)
+            filas.scraper.put(SENTINEL)
 
             if self._evento_parar.is_set():
                 texto_final = f"Cancelado — {total_baixados} assets baixados."

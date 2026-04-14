@@ -1,8 +1,8 @@
 """
 Orchestrator — Thread B do pipeline produtor-consumidor.
 
-Consome AssetBruto de fila_scraper, analisa via Moondream e extrai paleta
-K-Means, então posta AssetProcessado em fila_processada.
+Consome AssetBruto de filas.scraper, analisa via Moondream e extrai paleta
+K-Means, então posta AssetProcessado em filas.processada.
 
 ADR-01: Este é o ÚNICO módulo que invoca moondream_prompt.analisar_imagem().
 Toda comunicação com Ollama passa aqui — nunca de fora deste módulo.
@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from gi.repository import GLib
 
 from src.ai_vision.moondream_prompt import analisar_imagem
-from src.core.asset_queue import SENTINEL, AssetBruto, AssetProcessado, fila_processada, fila_scraper
+from src.core.asset_queue import SENTINEL, AssetBruto, AssetProcessado, filas
 from src.core.config.defaults import DEFAULTS
 from src.transformer.icon_alchemist import extrair_paleta
 
@@ -97,7 +97,7 @@ class Orchestrator:
     # ------------------------------------------------------------------
 
     def _executar(self) -> None:
-        """Corpo da Thread B: consome fila_scraper até SENTINEL."""
+        """Corpo da Thread B: consome filas.scraper até SENTINEL."""
         total = 0
         try:
             while True:
@@ -108,7 +108,7 @@ class Orchestrator:
                 if self._evento_parar.is_set():
                     break
 
-                item = fila_scraper.get()
+                item = filas.scraper.get()
 
                 if item is SENTINEL:
                     logger.info("Orchestrator recebeu SENTINEL — encerrando")
@@ -142,7 +142,7 @@ class Orchestrator:
                     timestamp=datetime.now(UTC).isoformat(),
                 )
 
-                fila_processada.put(processado)
+                filas.processada.put(processado)
                 total += 1
 
                 paleta_resumida = ", ".join(paleta[:2]) if paleta else "—"
@@ -153,7 +153,7 @@ class Orchestrator:
             logger.exception("Erro inesperado no Orchestrator")
             self._log(f"[ERRO] {exc}")
         finally:
-            fila_processada.put(SENTINEL)
+            filas.processada.put(SENTINEL)
             self._log(f"[INFO] Orquestrador encerrado — {total} assets analisados.")
             GLib.idle_add(self._on_concluido, total)
 
