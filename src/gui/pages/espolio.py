@@ -28,12 +28,12 @@ class EspolioPage(Gtk.Box):
 
     def _build_ui(self) -> None:
         # Título
-        titulo = Gtk.Label(label="ESPOLIO")
+        titulo = Gtk.Label(label="Espólio")
         titulo.add_css_class("page-title")
         titulo.set_xalign(0)
         self.append(titulo)
 
-        subtitulo = Gtk.Label(label="EXPORTACAO DE PACOTES")
+        subtitulo = Gtk.Label(label="Exportação de Pacotes")
         subtitulo.add_css_class("section-title")
         subtitulo.set_xalign(0)
         self.append(subtitulo)
@@ -41,7 +41,7 @@ class EspolioPage(Gtk.Box):
         self.append(Gtk.Separator())
 
         # Resumo da sessão
-        resumo_frame = Gtk.Frame(label="SESSAO ATUAL")
+        resumo_frame = Gtk.Frame(label="Sessão Atual")
         resumo_grid = Gtk.Grid()
         resumo_grid.set_row_spacing(6)
         resumo_grid.set_column_spacing(16)
@@ -75,7 +75,7 @@ class EspolioPage(Gtk.Box):
         self.append(resumo_frame)
 
         # Ações de exportação
-        acoes_frame = Gtk.Frame(label="ACOES")
+        acoes_frame = Gtk.Frame(label="Ações")
         acoes_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         acoes_box.set_margin_top(8)
         acoes_box.set_margin_bottom(8)
@@ -97,7 +97,7 @@ class EspolioPage(Gtk.Box):
         row1.append(self._btn_exportar_csv)
 
         row2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        self._btn_limpar = Gtk.Button(label="LIMPAR SESSAO")
+        self._btn_limpar = Gtk.Button(label="LIMPAR SESSÃO")
         self._btn_limpar.add_css_class("btn-danger")
         row2.append(self._btn_limpar)
 
@@ -107,7 +107,7 @@ class EspolioPage(Gtk.Box):
         self.append(acoes_frame)
 
         # Lista de pacotes gerados
-        historico_frame = Gtk.Frame(label="PACOTES GERADOS")
+        historico_frame = Gtk.Frame(label="Pacotes Gerados")
         hist_scroll = Gtk.ScrolledWindow()
         hist_scroll.set_vexpand(True)
         hist_scroll.set_min_content_height(150)

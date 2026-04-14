@@ -33,12 +33,12 @@ class ProtocoloPage(Gtk.Box):
 
     def _build_ui(self) -> None:
         # Título
-        titulo = Gtk.Label(label="PROTOCOLO")
+        titulo = Gtk.Label(label="Protocolo")
         titulo.add_css_class("page-title")
         titulo.set_xalign(0)
         self.append(titulo)
 
-        subtitulo = Gtk.Label(label="EXECUCAO EM LOTE")
+        subtitulo = Gtk.Label(label="Execução em Lote")
         subtitulo.add_css_class("section-title")
         subtitulo.set_xalign(0)
         self.append(subtitulo)
@@ -46,7 +46,7 @@ class ProtocoloPage(Gtk.Box):
         self.append(Gtk.Separator())
 
         # Adicionar URL individual
-        add_frame = Gtk.Frame(label="ADICIONAR URL")
+        add_frame = Gtk.Frame(label="Adicionar URL")
         add_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         add_box.set_margin_top(8)
         add_box.set_margin_bottom(8)
@@ -71,7 +71,7 @@ class ProtocoloPage(Gtk.Box):
         self.append(add_frame)
 
         # Lista de URLs
-        lista_frame = Gtk.Frame(label="FILA DE URLS")
+        lista_frame = Gtk.Frame(label="Fila de URLs")
         lista_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         lista_box.set_margin_top(8)
         lista_box.set_margin_bottom(8)
@@ -102,7 +102,7 @@ class ProtocoloPage(Gtk.Box):
         self.append(lista_frame)
 
         # Controles de execução do lote
-        ctrl_frame = Gtk.Frame(label="CONTROLE DO LOTE")
+        ctrl_frame = Gtk.Frame(label="Controle do Lote")
         ctrl_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         ctrl_box.set_margin_top(8)
         ctrl_box.set_margin_bottom(8)
@@ -112,7 +112,7 @@ class ProtocoloPage(Gtk.Box):
         self._btn_executar = Gtk.Button(label="EXECUTAR LOTE")
         self._btn_executar.add_css_class("btn-primary")
 
-        self._btn_retomar = Gtk.Button(label="RETOMAR SESSAO")
+        self._btn_retomar = Gtk.Button(label="RETOMAR SESSÃO")
         self._btn_retomar.add_css_class("btn-warning")
 
         self._btn_limpar_lista = Gtk.Button(label="LIMPAR LISTA")

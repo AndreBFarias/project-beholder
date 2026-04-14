@@ -41,12 +41,18 @@ headerbar {{
 .project-title {{
     color: {DRACULA_PURPLE};
     font-weight: bold;
-    font-size: 13px;
-    letter-spacing: 2px;
+    font-size: 16px;
 }}
 .project-tagline {{
     color: {DRACULA_COMMENT};
-    font-size: 10px;
+    font-size: 14px;
+}}
+.sidebar-module-name {{
+    font-size: 14px;
+    font-weight: bold;
+}}
+.sidebar-module-desc {{
+    font-size: 13px;
 }}
 listbox,
 .nav-listbox {{
@@ -54,7 +60,7 @@ listbox,
 }}
 listbox row,
 .nav-row {{
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-left: 3px solid transparent;
     background-color: transparent;
     color: {DRACULA_FG};
@@ -72,9 +78,9 @@ listbox row:hover,
 .status-bar {{
     background-color: #1e1f29;
     border-top: 1px solid {DRACULA_CURRENT};
-    padding: 4px 12px;
+    padding: 5px 12px;
     font-family: monospace;
-    font-size: 11px;
+    font-size: 13px;
     color: {DRACULA_COMMENT};
 }}
 .status-dot-ativo {{
@@ -97,9 +103,9 @@ listbox row:hover,
     background-color: {DRACULA_PURPLE};
     color: {DRACULA_BG};
     font-weight: bold;
-    border-radius: 5px;
+    border-radius: 6px;
     border: none;
-    padding: 6px 16px;
+    padding: 9px 22px;
 }}
 .btn-primary:hover {{
     background-color: #caa4ff;
@@ -111,9 +117,9 @@ listbox row:hover,
 .btn-secondary {{
     background-color: {DRACULA_CURRENT};
     color: {DRACULA_CYAN};
-    border-radius: 5px;
+    border-radius: 6px;
     border: 1px solid {DRACULA_COMMENT};
-    padding: 6px 16px;
+    padding: 9px 22px;
 }}
 .btn-secondary:hover {{
     background-color: #555770;
@@ -121,9 +127,9 @@ listbox row:hover,
 .btn-danger {{
     background-color: {DRACULA_RED};
     color: {DRACULA_FG};
-    border-radius: 5px;
+    border-radius: 6px;
     border: none;
-    padding: 6px 16px;
+    padding: 9px 22px;
     font-weight: bold;
 }}
 .btn-danger:hover {{
@@ -132,16 +138,16 @@ listbox row:hover,
 .btn-warning {{
     background-color: {DRACULA_ORANGE};
     color: {DRACULA_BG};
-    border-radius: 5px;
+    border-radius: 6px;
     border: none;
-    padding: 6px 16px;
+    padding: 9px 22px;
     font-weight: bold;
 }}
 .log-terminal {{
     background-color: #1e1f29;
     color: {DRACULA_GREEN};
     font-family: monospace;
-    font-size: 11px;
+    font-size: 14px;
     border-radius: 6px;
     padding: 8px;
     border: 1px solid {DRACULA_CURRENT};
@@ -151,7 +157,7 @@ textview text {{
     background-color: #1e1f29;
     color: {DRACULA_GREEN};
     font-family: monospace;
-    font-size: 11px;
+    font-size: 14px;
 }}
 entry {{
     background-color: #21222c;
@@ -162,7 +168,6 @@ entry {{
 }}
 entry:focus {{
     border-color: {DRACULA_PURPLE};
-    box-shadow: 0 0 0 2px rgba(189, 147, 249, 0.2);
 }}
 progressbar trough {{
     background-color: {DRACULA_CURRENT};
@@ -190,14 +195,13 @@ switch:checked {{
 }}
 label.page-title {{
     color: {DRACULA_FG};
-    font-size: 16px;
+    font-size: 24px;
     font-weight: bold;
 }}
 label.section-title {{
     color: {DRACULA_COMMENT};
-    font-size: 11px;
+    font-size: 14px;
     font-weight: bold;
-    letter-spacing: 1px;
 }}
 frame {{
     border: 1px solid {DRACULA_CURRENT};
@@ -205,15 +209,43 @@ frame {{
 }}
 frame > label {{
     color: {DRACULA_COMMENT};
-    font-size: 11px;
+    font-size: 14px;
+    font-weight: bold;
+}}
+treeview {{
+    background-color: #21222c;
+    color: {DRACULA_FG};
+    font-size: 13px;
+}}
+treeview > row {{
+    background-color: #21222c;
+    color: {DRACULA_FG};
+}}
+treeview > row:selected {{
+    background-color: {DRACULA_CURRENT};
+    color: {DRACULA_FG};
+}}
+treeview > header > button {{
+    background-color: #1e1f29;
+    color: {DRACULA_COMMENT};
+    border-bottom: 1px solid {DRACULA_CURRENT};
+    font-size: 13px;
+}}
+columnview {{
+    background-color: #21222c;
+    color: {DRACULA_FG};
 }}
 """
 
 
 def apply_theme() -> None:
-    """Aplica o tema Dracula globalmente via Gtk.StyleContext."""
+    """Aplica o tema Dracula globalmente via Gtk.StyleContext.
+
+    load_from_string() só existe no PyGObject >= 3.50 (GTK 4.12+).
+    Ubuntu 22.04 tem PyGObject 3.48 — usar load_from_data(bytes).
+    """
     provider = Gtk.CssProvider()
-    provider.load_from_string(CSS_DRACULA)
+    provider.load_from_data(CSS_DRACULA.encode("utf-8"))
     Gtk.StyleContext.add_provider_for_display(
         Gdk.Display.get_default(),
         provider,

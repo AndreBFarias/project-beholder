@@ -11,8 +11,9 @@ Sempre usar GLib.idle_add(callback, dados).
 """
 
 import logging
+from pathlib import Path
 
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, GdkPixbuf, Gtk
 
 from src.gui.pages.cacada import CacadaPage
 from src.gui.pages.cortex import CortexPage
@@ -34,8 +35,32 @@ class BeholderWindow(Adw.ApplicationWindow):
         self.set_title("Project Beholder")
         self.set_default_size(1100, 700)
         apply_theme()
+        self._definir_icone()
         self._build_ui()
         logger.info("Janela principal iniciada")
+
+    def _definir_icone(self) -> None:
+        """Define o ícone da janela a partir do beholder-icon.png."""
+        icon_path = Path("beholder-icon.png")
+        if not icon_path.exists():
+            return
+        try:
+            # Instala no hicolor para que o WM encontre via icon name
+            hicolor_dir = Path.home() / ".local/share/icons/hicolor/512x512/apps"
+            hicolor_dir.mkdir(parents=True, exist_ok=True)
+            dest = hicolor_dir / "com.beholder.app.png"
+            if not dest.exists():
+                import shutil
+
+                shutil.copy2(str(icon_path.resolve()), str(dest))
+            self.set_icon_name("com.beholder.app")
+        except Exception:
+            # Fallback: tenta carregar direto via GdkPixbuf (deprecado em GTK4 mas funcional)
+            try:
+                GdkPixbuf.Pixbuf.new_from_file(str(icon_path.resolve()))
+                Gtk.Window.set_default_icon_name("beholder-icon")
+            except Exception:
+                pass
 
     def _build_ui(self) -> None:
         # Container principal vertical
