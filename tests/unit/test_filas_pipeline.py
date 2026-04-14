@@ -12,7 +12,7 @@ from queue import Full
 
 import pytest
 
-from src.core.asset_queue import SENTINEL, AssetBruto, AssetProcessado, FilasPipeline
+from src.core.asset_queue import SENTINEL, FilasPipeline
 
 
 def test_filas_iniciam_vazias():
