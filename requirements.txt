@@ -1,8 +1,5 @@
-# Interface
-# PyGObject 3.50+ requer girepository-2.0 (GLib 2.80+) — indisponível no Ubuntu 22.04.
-# Pinar em <3.50 para usar gobject-introspection-1.0 (disponível em Ubuntu 22.04 como 1.72.0).
-# install.sh exporta PKG_CONFIG_PATH para que meson encontre os headers de compilação.
-PyGObject>=3.48,<3.50
+# Interface — PyGObject é pacote de sistema (GSD.md), instalado via install.sh
+# Nunca instalar PyGObject via pip.
 # Scraping
 playwright>=1.40.0
 requests>=2.31.0
