@@ -124,18 +124,16 @@ class EspolioPage(Gtk.Box):
         self._btn_exportar_csv.add_css_class("btn-secondary")
         self._btn_exportar_csv.connect("clicked", self._on_exportar_csv)
 
-        row1.append(self._btn_gerar)
-        row1.append(self._btn_abrir_pasta)
-        row1.append(self._btn_exportar_csv)
-
-        row2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self._btn_limpar = Gtk.Button(label="LIMPAR SESSÃO")
         self._btn_limpar.add_css_class("btn-danger")
         self._btn_limpar.connect("clicked", self._on_limpar_sessao)
-        row2.append(self._btn_limpar)
+
+        row1.append(self._btn_gerar)
+        row1.append(self._btn_abrir_pasta)
+        row1.append(self._btn_exportar_csv)
+        row1.append(self._btn_limpar)
 
         acoes_box.append(row1)
-        acoes_box.append(row2)
         acoes_frame.set_child(acoes_box)
         self.append(acoes_frame)
 

@@ -129,6 +129,22 @@ mkdir -p "$PROJECT_DIR/output"
 mkdir -p "$PROJECT_DIR/logs"
 ok "Diretórios do projeto criados"
 
+# Baixar binário do Ollama se ausente (ADR-03: isolado em bin/ollama)
+OLLAMA_BIN="$PROJECT_DIR/bin/ollama"
+if [ -f "$OLLAMA_BIN" ]; then
+    ok "bin/ollama já presente"
+else
+    log "Baixando binário do Ollama para bin/ollama..."
+    OLLAMA_URL="https://ollama.com/download/ollama-linux-amd64"
+    if curl -fSL --progress-bar "$OLLAMA_URL" -o "$OLLAMA_BIN"; then
+        chmod +x "$OLLAMA_BIN"
+        ok "bin/ollama baixado e configurado"
+    else
+        log "AVISO: Falha ao baixar Ollama — análise de IA indisponível"
+        log "       Baixe manualmente de https://ollama.com/download e salve em bin/ollama"
+        rm -f "$OLLAMA_BIN"
+    fi
+fi
 
 if [ -d "$PROJECT_DIR/.git" ]; then
     # Copiar hooks customizados
@@ -198,7 +214,7 @@ log "5/5 — Verificação final..."
 "$PYTHON_VENV" -c "import cv2; print('[install] OK: OpenCV')"                                                                      2>/dev/null || log "AVISO: OpenCV não disponível"
 "$PYTHON_VENV" -c "import src; print('[install] OK: pacote src importavel')"
 
-[ -f "$PROJECT_DIR/bin/ollama" ] && ok "bin/ollama presente" || log "AVISO: bin/ollama ausente — análise de IA indisponível (baixe em ollama.com)"
+[ -f "$PROJECT_DIR/bin/ollama" ] && ok "bin/ollama presente" || log "AVISO: bin/ollama ausente — análise de IA indisponível"
 
 separador
 echo ""
