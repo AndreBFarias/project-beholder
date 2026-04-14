@@ -15,10 +15,11 @@ Ações:
 
 import logging
 import subprocess
+import threading
 from pathlib import Path
 
 import httpx
-from gi.repository import Gtk
+from gi.repository import GLib, Gtk
 
 from src.core.config.config import Config
 from src.core.config.defaults import DEFAULTS
@@ -213,21 +214,36 @@ class GrimorioPage(Gtk.Box):
             logger.error("Falha ao salvar configurações: %s", exc)
 
     def _on_testar_ollama(self, _btn: Gtk.Button) -> None:
-        """Faz ping na porta configurada do Ollama."""
+        """Faz ping na porta configurada do Ollama em thread separada (ADR-01)."""
         porta = self._entry_porta.get_text().strip() or str(DEFAULTS["IA"]["ollama_port"])
+        self._btn_testar.set_sensitive(False)
+        self._label_status.set_label("Testando Ollama...")
+        threading.Thread(
+            target=self._thread_testar_ollama,
+            args=(porta,),
+            daemon=True,
+            name="beholder-grimorio-test",
+        ).start()
+        logger.info("Grimório: teste Ollama na porta %s", porta)
+
+    def _thread_testar_ollama(self, porta: str) -> None:
+        """Thread de teste do Ollama — resultado via GLib.idle_add (ADR-01)."""
         url = f"http://127.0.0.1:{porta}/api/tags"
         try:
             with httpx.Client(timeout=2.0) as client:
                 resp = client.get(url)
                 if resp.status_code == 200:
-                    self._label_status.set_label(f"[OK] Ollama online na porta {porta}.")
+                    GLib.idle_add(self._label_status.set_label, f"[OK] Ollama online na porta {porta}.")
                 else:
-                    self._label_status.set_label(f"[AVISO] Ollama respondeu HTTP {resp.status_code}.")
+                    GLib.idle_add(
+                        self._label_status.set_label, f"[AVISO] Ollama respondeu HTTP {resp.status_code}."
+                    )
         except httpx.ConnectError:
-            self._label_status.set_label(f"[OFFLINE] Ollama não responde na porta {porta}.")
+            GLib.idle_add(self._label_status.set_label, f"[OFFLINE] Ollama não responde na porta {porta}.")
         except Exception as exc:
-            self._label_status.set_label(f"[ERRO] {exc}")
-        logger.info("Grimório: teste Ollama na porta %s", porta)
+            GLib.idle_add(self._label_status.set_label, f"[ERRO] {exc}")
+        finally:
+            GLib.idle_add(self._btn_testar.set_sensitive, True)
 
     def _on_restaurar(self, _btn: Gtk.Button) -> None:
         """Restaura valores padrão e atualiza os campos."""
