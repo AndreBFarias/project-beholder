@@ -12,9 +12,7 @@ Cobrem:
 - Classificação correta de tipo
 """
 
-import pytest
-
-from src.scraper.html_parser import extrair_assets, _classificar_tipo, _url_valida
+from src.scraper.html_parser import _classificar_tipo, _url_valida, extrair_assets
 
 BASE = "https://exemplo.com"
 
@@ -122,7 +120,7 @@ def test_extrai_link_apple_touch_icon():
 
 
 def test_extrai_background_image_style():
-    html = '<html><body><div style="background-image: url(\'/bg/hero.jpg\')"></div></body></html>'
+    html = "<html><body><div style=\"background-image: url('/bg/hero.jpg')\"></div></body></html>"
     assets = extrair_assets(html, BASE)
     assert len(assets) == 1
     assert assets[0].url == "https://exemplo.com/bg/hero.jpg"

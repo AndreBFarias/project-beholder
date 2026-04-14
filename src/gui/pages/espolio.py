@@ -1,18 +1,31 @@
 """
-Módulo Espólio — Sprint 1: estrutura visual completa, sem backend conectado.
+Módulo Espólio — Exportação de pacotes.
 
 Controles:
-- GERAR PACOTE: organiza assets e cria .zip + CSV
+- GERAR PACOTE: inicia Packer (Thread C) → .zip + CSV
 - ABRIR PASTA: xdg-open output/
-- EXPORTAR CSV: diálogo de salvamento
-- LIMPAR SESSÃO: confirmação obrigatória
+- EXPORTAR CSV: FileChooserDialog de salvamento
+- LIMPAR SESSÃO: confirmação obrigatória + shutil.rmtree
+
+ADR-01: todos os callbacks de UI chamados via GLib.idle_add.
 """
 
 import logging
+import shutil
+import subprocess
+from pathlib import Path
 
 from gi.repository import Gtk
 
+from src.core.asset_queue import AssetProcessado, fila_processada
+from src.core.config.defaults import DEFAULTS
+from src.exporter.dataset_writer import escrever_csv
+from src.exporter.packer import Packer
+
 logger = logging.getLogger("beholder.gui.espolio")
+
+_DIR_OUTPUT = Path(DEFAULTS["Saida"]["diretorio_output"])
+_DIR_DATA = Path(DEFAULTS["Saida"]["diretorio_data"])
 
 
 class EspolioPage(Gtk.Box):
@@ -24,6 +37,12 @@ class EspolioPage(Gtk.Box):
         self.set_margin_bottom(20)
         self.set_margin_start(24)
         self.set_margin_end(24)
+        self._assets: list[AssetProcessado] = []
+        self._ultimo_zip: str = ""
+        self._packer = Packer(
+            on_log=self._cb_log,
+            on_concluido=self._cb_pacote_concluido,
+        )
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -85,12 +104,15 @@ class EspolioPage(Gtk.Box):
         row1 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self._btn_gerar = Gtk.Button(label="GERAR PACOTE")
         self._btn_gerar.add_css_class("btn-primary")
+        self._btn_gerar.connect("clicked", self._on_gerar)
 
         self._btn_abrir_pasta = Gtk.Button(label="ABRIR PASTA")
         self._btn_abrir_pasta.add_css_class("btn-secondary")
+        self._btn_abrir_pasta.connect("clicked", self._on_abrir_pasta)
 
         self._btn_exportar_csv = Gtk.Button(label="EXPORTAR CSV")
         self._btn_exportar_csv.add_css_class("btn-secondary")
+        self._btn_exportar_csv.connect("clicked", self._on_exportar_csv)
 
         row1.append(self._btn_gerar)
         row1.append(self._btn_abrir_pasta)
@@ -99,6 +121,7 @@ class EspolioPage(Gtk.Box):
         row2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self._btn_limpar = Gtk.Button(label="LIMPAR SESSÃO")
         self._btn_limpar.add_css_class("btn-danger")
+        self._btn_limpar.connect("clicked", self._on_limpar_sessao)
         row2.append(self._btn_limpar)
 
         acoes_box.append(row1)
@@ -106,17 +129,195 @@ class EspolioPage(Gtk.Box):
         acoes_frame.set_child(acoes_box)
         self.append(acoes_frame)
 
+        # Log de operações
+        log_frame = Gtk.Frame(label="Log")
+        log_scroll = Gtk.ScrolledWindow()
+        log_scroll.set_vexpand(True)
+        log_scroll.set_min_content_height(120)
+        log_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+
+        self._label_log = Gtk.Label(label="Aguardando operação...")
+        self._label_log.add_css_class("section-title")
+        self._label_log.set_vexpand(True)
+        self._label_log.set_valign(Gtk.Align.START)
+        self._label_log.set_xalign(0)
+        self._label_log.set_wrap(True)
+
+        log_scroll.set_child(self._label_log)
+        log_frame.set_child(log_scroll)
+        self.append(log_frame)
+
         # Lista de pacotes gerados
         historico_frame = Gtk.Frame(label="Pacotes Gerados")
         hist_scroll = Gtk.ScrolledWindow()
         hist_scroll.set_vexpand(True)
         hist_scroll.set_min_content_height(150)
 
-        self._label_historico = Gtk.Label(label="Nenhum pacote gerado nesta sessão.")
-        self._label_historico.add_css_class("section-title")
-        self._label_historico.set_vexpand(True)
-        self._label_historico.set_valign(Gtk.Align.CENTER)
+        self._listbox_pacotes = Gtk.ListBox()
+        self._listbox_pacotes.add_css_class("nav-listbox")
+        self._listbox_pacotes.set_selection_mode(Gtk.SelectionMode.NONE)
 
-        hist_scroll.set_child(self._label_historico)
+        self._row_placeholder_hist = Gtk.ListBoxRow()
+        self._row_placeholder_hist.set_selectable(False)
+        lbl_vazio = Gtk.Label(label="Nenhum pacote gerado nesta sessão.")
+        lbl_vazio.add_css_class("section-title")
+        lbl_vazio.set_vexpand(True)
+        lbl_vazio.set_valign(Gtk.Align.CENTER)
+        lbl_vazio.set_margin_top(12)
+        self._row_placeholder_hist.set_child(lbl_vazio)
+        self._listbox_pacotes.append(self._row_placeholder_hist)
+
+        hist_scroll.set_child(self._listbox_pacotes)
         historico_frame.set_child(hist_scroll)
         self.append(historico_frame)
+
+    # ------------------------------------------------------------------
+    # API pública — chamada pelo Orchestrator ao concluir
+    # ------------------------------------------------------------------
+
+    def registrar_asset(self, asset: AssetProcessado) -> None:
+        """Registra asset processado localmente para exportação direta."""
+        self._assets.append(asset)
+        self._atualizar_contadores()
+
+    # ------------------------------------------------------------------
+    # Handlers de botão
+    # ------------------------------------------------------------------
+
+    def _on_gerar(self, _btn: Gtk.Button) -> None:
+        """Inicia Packer (Thread C) para gerar .zip."""
+        if self._packer.esta_ativo():
+            self._cb_log("[AVISO] Packer já em execução.")
+            return
+        self._btn_gerar.set_sensitive(False)
+        self._cb_log("[INFO] Iniciando empacotamento...")
+
+        # Se há assets em memória, posta na fila + SENTINEL para o Packer consumir
+        if self._assets:
+            for asset in self._assets:
+                fila_processada.put(asset)
+            fila_processada.put(None)  # SENTINEL
+            self._packer.iniciar()
+        else:
+            self._cb_log("[AVISO] Nenhum asset disponível para empacotar.")
+            self._btn_gerar.set_sensitive(True)
+
+    def _on_abrir_pasta(self, _btn: Gtk.Button) -> None:
+        """Abre o diretório output/ com xdg-open."""
+        _DIR_OUTPUT.mkdir(parents=True, exist_ok=True)
+        try:
+            subprocess.Popen(["xdg-open", str(_DIR_OUTPUT)])
+        except OSError as exc:
+            logger.error("Falha ao abrir pasta: %s", exc)
+            self._cb_log(f"[ERRO] Não foi possível abrir a pasta: {exc}")
+
+    def _on_exportar_csv(self, _btn: Gtk.Button) -> None:
+        """Abre FileChooserDialog para salvar CSV."""
+        janela = self.get_root()
+        dialogo = Gtk.FileChooserDialog(
+            title="Exportar CSV",
+            transient_for=janela,
+            action=Gtk.FileChooserAction.SAVE,
+        )
+        dialogo.add_button("_Cancelar", Gtk.ResponseType.CANCEL)
+        dialogo.add_button("_Salvar", Gtk.ResponseType.ACCEPT)
+        dialogo.set_current_name("beholder_metadata.csv")
+
+        filtro = Gtk.FileFilter()
+        filtro.set_name("CSV (*.csv)")
+        filtro.add_pattern("*.csv")
+        dialogo.add_filter(filtro)
+
+        dialogo.connect("response", self._cb_dialogo_csv)
+        dialogo.present()
+
+    def _on_limpar_sessao(self, _btn: Gtk.Button) -> None:
+        """Pede confirmação e limpa dados da sessão."""
+        janela = self.get_root()
+        dialogo = Gtk.MessageDialog(
+            transient_for=janela,
+            modal=True,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Limpar sessão atual?",
+        )
+        dialogo.format_secondary_text(
+            "Isso apagará todos os arquivos em data/sessao_atual/. Esta ação não pode ser desfeita."
+        )
+        dialogo.connect("response", self._cb_confirmar_limpar)
+        dialogo.present()
+
+    # ------------------------------------------------------------------
+    # Callbacks
+    # ------------------------------------------------------------------
+
+    def _cb_dialogo_csv(self, dialogo: Gtk.FileChooserDialog, resposta: int) -> None:
+        if resposta == Gtk.ResponseType.ACCEPT:
+            arquivo = dialogo.get_file()
+            if arquivo:
+                destino = Path(arquivo.get_path())
+                try:
+                    escrever_csv(self._assets, destino)
+                    self._cb_log(f"[OK] CSV exportado: {destino}")
+                except OSError as exc:
+                    logger.error("Falha ao exportar CSV: %s", exc)
+                    self._cb_log(f"[ERRO] {exc}")
+        dialogo.destroy()
+
+    def _cb_confirmar_limpar(self, dialogo: Gtk.MessageDialog, resposta: int) -> None:
+        dialogo.destroy()
+        if resposta == Gtk.ResponseType.YES:
+            try:
+                if _DIR_DATA.exists():
+                    shutil.rmtree(_DIR_DATA)
+                    _DIR_DATA.mkdir(parents=True, exist_ok=True)
+                self._assets.clear()
+                self._atualizar_contadores()
+                self._cb_log("[INFO] Sessão limpa.")
+                logger.info("Sessão limpa pelo usuário")
+            except OSError as exc:
+                logger.error("Falha ao limpar sessão: %s", exc)
+                self._cb_log(f"[ERRO] {exc}")
+
+    def _cb_log(self, msg: str) -> None:
+        self._label_log.set_label(msg)
+        logger.info("Espólio: %s", msg)
+
+    def _cb_pacote_concluido(self, caminho_zip: str) -> None:
+        """Packer encerrou — atualiza histórico e reativa botão."""
+        self._btn_gerar.set_sensitive(True)
+        if caminho_zip:
+            self._ultimo_zip = caminho_zip
+            self._adicionar_historico(caminho_zip)
+            self._cb_log(f"[OK] Pacote pronto: {Path(caminho_zip).name}")
+        else:
+            self._cb_log("[AVISO] Empacotamento encerrado sem arquivo.")
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _atualizar_contadores(self) -> None:
+        icons = sum(1 for a in self._assets if a.tipo in {"icon", "logo", "svg", "vector"})
+        fundos = sum(1 for a in self._assets if a.tipo in {"background", "photo"})
+        outros = len(self._assets) - icons - fundos
+
+        self._labels_valores["Assets processados:"].set_label(str(len(self._assets)))
+        self._labels_valores["Ícones:"].set_label(str(icons))
+        self._labels_valores["Fundos:"].set_label(str(fundos))
+        self._labels_valores["Outros:"].set_label(str(outros))
+
+    def _adicionar_historico(self, caminho_zip: str) -> None:
+        if self._row_placeholder_hist:
+            self._listbox_pacotes.remove(self._row_placeholder_hist)
+            self._row_placeholder_hist = None
+
+        row = Gtk.ListBoxRow()
+        row.set_selectable(False)
+        lbl = Gtk.Label(label=Path(caminho_zip).name)
+        lbl.set_xalign(0)
+        lbl.set_margin_top(4)
+        lbl.set_margin_bottom(4)
+        lbl.set_margin_start(8)
+        row.set_child(lbl)
+        self._listbox_pacotes.prepend(row)
