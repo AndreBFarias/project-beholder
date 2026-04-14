@@ -1,11 +1,13 @@
 """
-Módulo Caçada — Sprint 1: estrutura visual completa, sem backend conectado.
+Módulo Busca — Extração de assets de interface.
 
 Controles:
 - Campo URL + botão INICIAR + toggle FURTIVO
-- Log em tempo real (LogTerminal)
+- Log em tempo real (LogTerminal) via GLib.idle_add
 - Barra de progresso
-- Botões PAUSAR e CANCELAR (aparecem durante scraping)
+- PAUSAR (toggle) e CANCELAR durante scraping
+
+ADR-01: todos os callbacks de UI chamados via GLib.idle_add pelo StealthSpider.
 """
 
 import logging
@@ -13,6 +15,7 @@ import logging
 from gi.repository import Gtk
 
 from src.gui.widgets import LogTerminal
+from src.scraper.stealth_spider import StealthSpider
 
 logger = logging.getLogger("beholder.gui.cacada")
 
@@ -26,6 +29,11 @@ class CacadaPage(Gtk.Box):
         self.set_margin_bottom(20)
         self.set_margin_start(24)
         self.set_margin_end(24)
+        self._spider = StealthSpider(
+            on_log=self._cb_log,
+            on_progresso=self._cb_progresso,
+            on_concluido=self._cb_concluido,
+        )
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -50,7 +58,6 @@ class CacadaPage(Gtk.Box):
         url_box.set_margin_start(8)
         url_box.set_margin_end(8)
 
-        # Campo URL
         url_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self._entry_url = Gtk.Entry()
         self._entry_url.set_placeholder_text("https://exemplo.com")
@@ -68,10 +75,12 @@ class CacadaPage(Gtk.Box):
         self._btn_pausar = Gtk.Button(label="PAUSAR")
         self._btn_pausar.add_css_class("btn-warning")
         self._btn_pausar.set_visible(False)
+        self._btn_pausar.connect("clicked", self._on_pausar)
 
         self._btn_cancelar = Gtk.Button(label="CANCELAR")
         self._btn_cancelar.add_css_class("btn-danger")
         self._btn_cancelar.set_visible(False)
+        self._btn_cancelar.connect("clicked", self._on_cancelar)
 
         # Toggle FURTIVO
         furtivo_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
@@ -118,14 +127,65 @@ class CacadaPage(Gtk.Box):
         log_frame.set_child(self._log_terminal)
         self.append(log_frame)
 
+    # ------------------------------------------------------------------
+    # Handlers de botão
+    # ------------------------------------------------------------------
+
     def _on_iniciar(self, _btn: Gtk.Button) -> None:
-        """Placeholder — backend será conectado na Sprint 3."""
+        """Valida URL e inicia o StealthSpider."""
         url = self._entry_url.get_text().strip()
         if not url:
             self._log_terminal.append_line("[AVISO] Insira uma URL antes de iniciar.")
             return
-        self._log_terminal.append_line(f"[INFO] Iniciando caçada: {url}")
+        if not url.startswith(("http://", "https://")):
+            self._log_terminal.append_line("[AVISO] URL deve começar com http:// ou https://")
+            return
+
+        self._log_terminal.limpar()
+        self._progresso.set_fraction(0.0)
+        self._progresso.set_text("Iniciando...")
         self._btn_iniciar.set_visible(False)
+        self._btn_iniciar.set_sensitive(False)
         self._btn_pausar.set_visible(True)
+        self._btn_pausar.set_label("PAUSAR")
         self._btn_cancelar.set_visible(True)
-        self._progresso.set_text("Conectando...")
+        self._entry_url.set_sensitive(False)
+
+        self._spider.iniciar(url)
+        logger.info("Caçada iniciada: %s", url)
+
+    def _on_pausar(self, _btn: Gtk.Button) -> None:
+        """Alterna entre pausar e retomar o spider."""
+        if self._spider.esta_pausado():
+            self._spider.retomar()
+            self._btn_pausar.set_label("PAUSAR")
+        else:
+            self._spider.pausar()
+            self._btn_pausar.set_label("RETOMAR")
+
+    def _on_cancelar(self, _btn: Gtk.Button) -> None:
+        """Cancela o spider e restaura o estado inicial da UI."""
+        self._spider.cancelar()
+        # A UI é restaurada pelo callback _cb_concluido quando a thread encerrar
+
+    # ------------------------------------------------------------------
+    # Callbacks de UI — chamados via GLib.idle_add pelo StealthSpider (ADR-01)
+    # ------------------------------------------------------------------
+
+    def _cb_log(self, msg: str) -> None:
+        """Recebe linha de log da thread e atualiza o terminal."""
+        self._log_terminal.append_line(msg)
+
+    def _cb_progresso(self, fracao: float, texto: str) -> None:
+        """Recebe atualização de progresso da thread."""
+        self._progresso.set_fraction(max(0.0, min(1.0, fracao)))
+        self._progresso.set_text(texto)
+
+    def _cb_concluido(self, total: int) -> None:
+        """Restaura a UI ao estado inicial após o término do scraping."""
+        self._btn_iniciar.set_visible(True)
+        self._btn_iniciar.set_sensitive(True)
+        self._btn_pausar.set_visible(False)
+        self._btn_cancelar.set_visible(False)
+        self._entry_url.set_sensitive(True)
+        logger.info("Caçada concluída — %d assets", total)
