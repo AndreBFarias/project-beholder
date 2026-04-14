@@ -1,13 +1,17 @@
 """
 StealthSpider — Thread A do pipeline produtor-consumidor.
 
-Baixa páginas e assets via requests, com delays configuráveis e backoff
-exponencial. Toda atualização de UI é feita via GLib.idle_add (ADR-01).
+Dois modos de operação:
+- Normal  : requests com backoff exponencial
+- Furtivo : Playwright headless com evasão de fingerprint (UA aleatório,
+            viewport variado, navigator.webdriver mascarado, backoff em 429/403)
+
+Toda atualização de UI é feita via GLib.idle_add (ADR-01).
 
 Fluxo:
-    StealthSpider.iniciar(url)
+    StealthSpider.iniciar(url, modo_furtivo=False)
         → thread._executar()
-            → _get_com_retry(url)  → HTML
+            → _get_com_retry(url) ou _get_playwright(url)  → HTML
             → extrair_assets(html, url)  → list[AssetBruto]
             → _baixar_asset(asset)  → Path
             → fila_scraper.put(asset)
@@ -30,6 +34,30 @@ from src.core.config.defaults import DEFAULTS
 from src.scraper.html_parser import extrair_assets
 
 logger = logging.getLogger("beholder.scraper.stealth_spider")
+
+# User-agents realistas para rotação no modo furtivo
+USER_AGENTS = [
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
+]
+
+VIEWPORTS = [
+    {"width": 1280, "height": 720},
+    {"width": 1366, "height": 768},
+    {"width": 1440, "height": 900},
+    {"width": 1920, "height": 1080},
+    {"width": 1600, "height": 900},
+]
+
+# Executado antes do JS da página — mascara sinais de automação
+SCRIPT_EVASAO = (
+    "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+    "Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});"
+    "Object.defineProperty(navigator, 'languages', {get: () => ['pt-BR', 'pt', 'en-US', 'en']});"
+)
 
 CallbackLog = Callable[[str], None]
 CallbackProgresso = Callable[[float, str], None]
@@ -75,8 +103,14 @@ class StealthSpider:
     # API pública
     # ------------------------------------------------------------------
 
-    def iniciar(self, url: str, diretorio_saida: str = "data/sessao_atual") -> None:
-        """Inicia o scraping em thread separada. Ignorado se já em execução."""
+    def iniciar(self, url: str, diretorio_saida: str = "data/sessao_atual", modo_furtivo: bool = False) -> None:
+        """Inicia o scraping em thread separada. Ignorado se já em execução.
+
+        Args:
+            url: Página alvo.
+            diretorio_saida: Pasta local onde os assets serão salvos.
+            modo_furtivo: Se True, usa Playwright com evasão de fingerprint.
+        """
         if self._thread and self._thread.is_alive():
             logger.warning("Spider já em execução — ignorando iniciar()")
             return
@@ -86,12 +120,12 @@ class StealthSpider:
 
         self._thread = threading.Thread(
             target=self._executar,
-            args=(url, diretorio_saida),
+            args=(url, diretorio_saida, modo_furtivo),
             daemon=True,
             name="beholder-spider",
         )
         self._thread.start()
-        logger.info("StealthSpider iniciado para %s", url)
+        logger.info("StealthSpider iniciado para %s (furtivo=%s)", url, modo_furtivo)
 
     def pausar(self) -> None:
         """Pausa a thread entre downloads. Retomável via retomar()."""
@@ -124,17 +158,22 @@ class StealthSpider:
     # Thread A — execução interna
     # ------------------------------------------------------------------
 
-    def _executar(self, url: str, diretorio_saida: str) -> None:
+    def _executar(self, url: str, diretorio_saida: str, modo_furtivo: bool) -> None:
         """Corpo da Thread A: baixa página, extrai e baixa assets."""
         dir_saida = Path(diretorio_saida)
         dir_saida.mkdir(parents=True, exist_ok=True)
         total_baixados = 0
 
         try:
-            self._log(f"[INFO] Conectando a {url} ...")
-            self._progresso(0.05, "Baixando página...")
+            if modo_furtivo:
+                self._log("[INFO] Modo furtivo ativo — Playwright com evasão de fingerprint.")
+                self._progresso(0.05, "Modo furtivo: iniciando Playwright...")
+                html = self._get_playwright(url)
+            else:
+                self._log(f"[INFO] Conectando a {url} ...")
+                self._progresso(0.05, "Baixando página...")
+                html = self._get_com_retry(url)
 
-            html = self._get_com_retry(url)
             if html is None:
                 self._log(f"[ERRO] Falha ao baixar {url} após {self._max_retries} tentativas.")
                 self._progresso(0.0, "Erro ao conectar")
@@ -236,6 +275,61 @@ class StealthSpider:
         except Exception as exc:
             logger.debug("Falha ao baixar %s: %s", asset.url, exc)
             return None
+
+    def _get_playwright(self, url: str) -> str | None:
+        """Obtém HTML via Playwright headless com evasão de fingerprint.
+
+        Mascara navigator.webdriver, rotaciona user-agent e viewport.
+        Aplica backoff exponencial em respostas 429/403.
+        """
+        from playwright.sync_api import Error as PlaywrightError
+        from playwright.sync_api import sync_playwright
+
+        user_agent = random.choice(USER_AGENTS)
+        viewport = random.choice(VIEWPORTS)
+
+        self._log(f"[INFO] Playwright — UA: {user_agent[:60]}...")
+        self._log(f"[INFO] Playwright — viewport: {viewport['width']}x{viewport['height']}")
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            try:
+                ctx = browser.new_context(
+                    user_agent=user_agent,
+                    viewport=viewport,
+                    locale="pt-BR",
+                    timezone_id="America/Sao_Paulo",
+                )
+                ctx.add_init_script(SCRIPT_EVASAO)
+                page = ctx.new_page()
+
+                for tentativa in range(1, self._max_retries + 1):
+                    if self._evento_parar.is_set():
+                        return None
+                    try:
+                        resp = page.goto(url, timeout=self._timeout * 1000, wait_until="domcontentloaded")
+                        if resp and resp.status in (429, 403):
+                            espera = 2**tentativa
+                            self._log(
+                                f"[AVISO] HTTP {resp.status} — backoff {espera}s "
+                                f"(tentativa {tentativa}/{self._max_retries})..."
+                            )
+                            time.sleep(espera)
+                            continue
+                        html = page.content()
+                        self._log(f"[OK] Página capturada via Playwright ({len(html)} bytes)")
+                        return html
+                    except PlaywrightError as exc:
+                        logger.warning("Playwright tentativa %d: %s", tentativa, exc)
+                        if tentativa < self._max_retries:
+                            espera = 2**tentativa
+                            self._log(f"[AVISO] Tentativa {tentativa} falhou — aguardando {espera}s...")
+                            time.sleep(espera)
+
+                self._log(f"[ERRO] Playwright falhou após {self._max_retries} tentativas.")
+                return None
+            finally:
+                browser.close()
 
     # ------------------------------------------------------------------
     # Helpers GLib.idle_add (ADR-01 — nunca tocar UI direto de thread)
