@@ -60,17 +60,11 @@ class EspolioPage(Gtk.Box):
 
         self.append(Gtk.Separator())
 
-        # Resumo da sessão
-        resumo_frame = Gtk.Frame(label="Sessão Atual")
-        resumo_grid = Gtk.Grid()
-        resumo_grid.set_row_spacing(6)
-        resumo_grid.set_column_spacing(16)
-        resumo_grid.set_margin_top(8)
-        resumo_grid.set_margin_bottom(8)
-        resumo_grid.set_margin_start(8)
-        resumo_grid.set_margin_end(8)
+        # Resumo da sessão — mini-cards horizontais
+        resumo_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        resumo_box.set_homogeneous(True)
 
-        labels_info = [
+        cards_info = [
             ("Assets brutos:", "0"),
             ("Assets processados:", "0"),
             ("Ícones:", "0"),
@@ -79,21 +73,29 @@ class EspolioPage(Gtk.Box):
         ]
 
         self._labels_valores: dict[str, Gtk.Label] = {}
-        for i, (chave, valor) in enumerate(labels_info):
-            lbl_chave = Gtk.Label(label=chave)
-            lbl_chave.add_css_class("section-title")
-            lbl_chave.set_xalign(1)
+        for chave, valor in cards_info:
+            card_frame = Gtk.Frame()
+            card_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            card_box.set_margin_top(12)
+            card_box.set_margin_bottom(12)
+            card_box.set_margin_start(8)
+            card_box.set_margin_end(8)
+            card_box.set_halign(Gtk.Align.CENTER)
 
             lbl_valor = Gtk.Label(label=valor)
-            lbl_valor.add_css_class("sidebar-module-name")
-            lbl_valor.set_xalign(0)
+            lbl_valor.add_css_class("page-title")
             self._labels_valores[chave] = lbl_valor
 
-            resumo_grid.attach(lbl_chave, 0, i, 1, 1)
-            resumo_grid.attach(lbl_valor, 1, i, 1, 1)
+            nome_curto = chave.rstrip(":")
+            lbl_nome = Gtk.Label(label=nome_curto)
+            lbl_nome.add_css_class("section-title")
 
-        resumo_frame.set_child(resumo_grid)
-        self.append(resumo_frame)
+            card_box.append(lbl_valor)
+            card_box.append(lbl_nome)
+            card_frame.set_child(card_box)
+            resumo_box.append(card_frame)
+
+        self.append(resumo_box)
 
         # Ações de exportação
         acoes_frame = Gtk.Frame(label="Ações")
