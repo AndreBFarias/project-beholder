@@ -324,7 +324,11 @@ class ProtocoloPage(Gtk.Box):
             )
             try:
                 spider.iniciar(url, modo_furtivo=modo_furtivo)
-                concluido_evt.wait(timeout=300)  # máx 5 min por URL
+                terminado = concluido_evt.wait(timeout=300)  # máx 5 min por URL
+                if not terminado:
+                    status_final[0] = "erro"
+                    spider.cancelar()
+                    logger.warning("Timeout ao processar %s", url)
             except Exception as exc:
                 logger.error("Erro ao processar %s: %s", url, exc)
                 status_final[0] = "erro"
