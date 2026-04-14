@@ -18,6 +18,7 @@ Fluxo:
         → filas.scraper.put(SENTINEL)  → sinaliza fim para Thread B
 """
 
+import hashlib
 import logging
 import random
 import threading
@@ -253,7 +254,7 @@ class StealthSpider:
         try:
             nome = Path(urlparse(asset.url).path).name
             if not nome or "." not in nome:
-                nome = f"asset_{hash(asset.url) & 0xFFFFFF:06x}.bin"
+                nome = f"asset_{hashlib.md5(asset.url.encode()).hexdigest()[:12]}.bin"
 
             caminho = diretorio / nome
 
