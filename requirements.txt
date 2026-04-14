@@ -1,5 +1,8 @@
 # Interface
-PyGObject>=3.48.0
+# PyGObject 3.50+ requer girepository-2.0 (GLib 2.80+) — indisponível no Ubuntu 22.04.
+# Pinar em <3.50 para usar gobject-introspection-1.0 (disponível em Ubuntu 22.04 como 1.72.0).
+# install.sh exporta PKG_CONFIG_PATH para que meson encontre os headers de compilação.
+PyGObject>=3.48,<3.50
 # Scraping
 playwright>=1.40.0
 requests>=2.31.0
@@ -17,5 +20,6 @@ python-dotenv>=1.0.0
 # Dev
 pytest>=8.0.0
 pytest-cov>=4.1.0
+pytest-timeout>=2.0.0
 ruff>=0.3.0
 pre-commit>=3.5.0

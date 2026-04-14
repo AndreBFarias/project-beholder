@@ -17,6 +17,38 @@ fail() { echo "[install] ERRO: $*" >&2; exit 1; }
 separador() { echo "------------------------------------------------------------"; }
 
 # ----------------------------------------------------------------------
+# 0. Instalar dependências de sistema (GTK4 + GObject bindings)
+#
+# PyGObject NÃO é instalado via pip — é um pacote de sistema ligado ao GTK do SO.
+# Verificamos quais pacotes faltam antes de chamar sudo (evita sudo desnecessário).
+
+separador
+log "0/5 — Dependencias de sistema (GTK4)..."
+
+PKGS_NECESSARIOS=(
+    python3-gi
+    python3-gi-cairo
+    gir1.2-gtk-4.0
+    gir1.2-adw-1
+    gir1.2-glib-2.0
+    libgirepository1.0-dev
+)
+
+PKGS_FALTANDO=()
+for pkg in "${PKGS_NECESSARIOS[@]}"; do
+    dpkg -s "$pkg" >/dev/null 2>&1 || PKGS_FALTANDO+=("$pkg")
+done
+
+if [ ${#PKGS_FALTANDO[@]} -gt 0 ]; then
+    log "Pacotes ausentes: ${PKGS_FALTANDO[*]}"
+    log "Instalando via apt (requer sudo)..."
+    sudo apt-get install -y "${PKGS_FALTANDO[@]}"
+    ok "Pacotes de sistema instalados"
+else
+    ok "Dependencias de sistema ja presentes"
+fi
+
+# ----------------------------------------------------------------------
 # 1. Verificar Python >= 3.12
 
 separador
@@ -67,7 +99,12 @@ separador
 log "3/5 — Instalando dependencias..."
 
 "$PIP_VENV" install --quiet --upgrade pip setuptools wheel
-"$PIP_VENV" install --quiet -r "$PROJECT_DIR/requirements.txt"
+
+# PKG_CONFIG_PATH necessário para PyGObject compilar com os headers de sistema.
+# Ubuntu 22.04 tem gobject-introspection-1.0 em /usr/lib/x86_64-linux-gnu/pkgconfig/
+export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
+"$PIP_VENV" install -r "$PROJECT_DIR/requirements.txt"
 ok "requirements.txt instalado"
 
 # Playwright chromium (necessário para modo furtivo)
@@ -81,7 +118,17 @@ fi
 # 4. Instalar hooks git
 
 separador
-log "4/5 — Configurando hooks git..."
+log "4/5 — Configurando hooks git e diretorios..."
+
+# Garantir que diretórios do projeto existem (isolados dentro do projeto)
+mkdir -p "$PROJECT_DIR/bin"
+mkdir -p "$PROJECT_DIR/models"
+mkdir -p "$PROJECT_DIR/data/sessao_atual"
+mkdir -p "$PROJECT_DIR/data/ollama_tmp"
+mkdir -p "$PROJECT_DIR/output"
+mkdir -p "$PROJECT_DIR/logs"
+ok "Diretorios do projeto criados"
+
 
 if [ -d "$PROJECT_DIR/.git" ]; then
     # Copiar hooks customizados

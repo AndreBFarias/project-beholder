@@ -66,6 +66,33 @@ config_path = Path.home() / ".config" / "beholder" / "config.ini"
 config_path.parent.mkdir(parents=True, exist_ok=True)
 ```
 
+### PyGObject — NUNCA instalar via pip
+```bash
+# ERRADO — falha porque precisa de headers de sistema:
+pip install PyGObject
+
+# CERTO — é um pacote de sistema, instalado pelo install.sh:
+sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adw-1
+
+# O venv é criado com --system-site-packages para acessar o gi do sistema.
+# Nunca remover essa flag ao recriar o venv.
+```
+
+### Caminhos do Ollama — tudo dentro do projeto
+```bash
+# ERRADO — espalha arquivos fora do projeto:
+OLLAMA_TMPDIR="/tmp/ollama_beholder"   # fora do projeto
+# Ollama salva modelos em ~/.ollama/models por padrão — também errado
+
+# CERTO — isolado dentro de Project_Beholder/:
+OLLAMA_TMPDIR="$PROJECT_DIR/data/ollama_tmp"
+OLLAMA_MODELS="$PROJECT_DIR/models"
+
+# run.sh exporta essas variáveis antes de iniciar o Python.
+# ollama_lifecycle.py deve usar Config().get('IA', 'ollama_tmpdir') e 'ollama_models'
+# e converter para path absoluto com Path(PROJECT_DIR) / valor_relativo.
+```
+
 ### Sentinel nas filas
 ```python
 # Sempre enviar SENTINEL ao final para sinalizar EOF:
