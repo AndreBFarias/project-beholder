@@ -19,9 +19,14 @@ DEFAULTS: dict = {
     "IA": {
         "ollama_port": 11435,
         "modelo": "moondream",
+        "modelo_tier": "low",
+        "modelos_disponiveis": {
+            "low": {"nome": "moondream", "vram_gb": 1.7, "descricao": "Rápido, qualidade básica"},
+            "medium": {"nome": "minicpm-v", "vram_gb": 2.5, "descricao": "Equilíbrio qualidade/velocidade"},
+            "high": {"nome": "llava:7b", "vram_gb": 4.5, "descricao": "Melhor precisão, mais lento"},
+        },
         "max_concurrent": 1,
         "timeout_analise": 60,
-        # Caminhos relativos ao PROJECT_DIR — tudo isolado dentro do projeto
         "ollama_tmpdir": "data/ollama_tmp",
         "ollama_models": "models",
     },

@@ -146,6 +146,69 @@ else
     fi
 fi
 
+# Baixar modelos de visão (3 tiers) via Ollama
+MODELOS_VISAO="moondream minicpm-v llava:7b"
+OLLAMA_PORT=11435
+
+if [ -f "$OLLAMA_BIN" ]; then
+    log "Verificando modelos de visão..."
+    OLLAMA_MODELS_DIR="$PROJECT_DIR/models"
+    OLLAMA_TMP="$PROJECT_DIR/data/ollama_tmp"
+    mkdir -p "$OLLAMA_MODELS_DIR" "$OLLAMA_TMP"
+
+    FALTANDO=""
+    for modelo in $MODELOS_VISAO; do
+        nome_dir=$(echo "$modelo" | tr ':' '/')
+        if [ -d "$OLLAMA_MODELS_DIR/manifests" ] && \
+           find "$OLLAMA_MODELS_DIR/manifests" -path "*${nome_dir}*" -type f 2>/dev/null | grep -q .; then
+            ok "Modelo $modelo presente"
+        else
+            FALTANDO="$FALTANDO $modelo"
+        fi
+    done
+
+    if [ -n "$FALTANDO" ]; then
+        log "Modelos ausentes:$FALTANDO — iniciando download..."
+        log "Isso pode levar vários minutos na primeira instalação."
+
+        export OLLAMA_HOST="127.0.0.1:$OLLAMA_PORT"
+        export OLLAMA_MODELS="$OLLAMA_MODELS_DIR"
+        OLLAMA_TMPDIR="$OLLAMA_TMP" "$OLLAMA_BIN" serve &
+        SERVE_PID=$!
+
+        ESPERA=0
+        while ! curl -s "http://127.0.0.1:$OLLAMA_PORT/api/tags" >/dev/null 2>&1; do
+            sleep 1
+            ESPERA=$((ESPERA + 1))
+            if [ "$ESPERA" -ge 30 ]; then
+                log "AVISO: Ollama não respondeu — download dos modelos ignorado"
+                kill -TERM "$SERVE_PID" 2>/dev/null || true
+                wait "$SERVE_PID" 2>/dev/null || true
+                FALTANDO=""
+                break
+            fi
+        done
+
+        for modelo in $FALTANDO; do
+            log "Baixando $modelo..."
+            if timeout 900 "$OLLAMA_BIN" pull "$modelo" 2>&1 | while IFS= read -r linha; do
+                log "  $linha"
+            done; then
+                ok "Modelo $modelo baixado"
+            else
+                log "AVISO: Falha ao baixar $modelo — tente novamente via run.sh"
+            fi
+        done
+
+        kill -TERM "$SERVE_PID" 2>/dev/null || true
+        wait "$SERVE_PID" 2>/dev/null || true
+    else
+        ok "Todos os modelos de visão presentes"
+    fi
+else
+    log "AVISO: bin/ollama ausente — modelos não baixados"
+fi
+
 if [ -d "$PROJECT_DIR/.git" ]; then
     # Copiar hooks customizados
     cp "$PROJECT_DIR/hooks/pre-commit"  "$PROJECT_DIR/.git/hooks/pre-commit"
