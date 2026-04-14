@@ -134,15 +134,20 @@ OLLAMA_BIN="$PROJECT_DIR/bin/ollama"
 if [ -f "$OLLAMA_BIN" ]; then
     ok "bin/ollama já presente"
 else
-    log "Baixando binário do Ollama para bin/ollama..."
-    OLLAMA_URL="https://ollama.com/download/ollama-linux-amd64"
-    if curl -fSL --progress-bar "$OLLAMA_URL" -o "$OLLAMA_BIN"; then
+    log "Baixando Ollama (pode levar alguns minutos)..."
+    OLLAMA_VERSION=$(curl -sL "https://api.github.com/repos/ollama/ollama/releases/latest" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "//;s/".*//')
+    OLLAMA_VERSION="${OLLAMA_VERSION:-v0.20.7}"
+    OLLAMA_URL="https://github.com/ollama/ollama/releases/download/${OLLAMA_VERSION}/ollama-linux-amd64.tar.zst"
+    OLLAMA_TMP_TAR="$PROJECT_DIR/bin/.ollama-download.tar.zst"
+    if curl -fSL --progress-bar "$OLLAMA_URL" -o "$OLLAMA_TMP_TAR"; then
+        tar --zstd -xf "$OLLAMA_TMP_TAR" -C "$PROJECT_DIR" bin/ollama
         chmod +x "$OLLAMA_BIN"
-        ok "bin/ollama baixado e configurado"
+        rm -f "$OLLAMA_TMP_TAR"
+        ok "bin/ollama ${OLLAMA_VERSION} instalado"
     else
         log "AVISO: Falha ao baixar Ollama — análise de IA indisponível"
-        log "       Baixe manualmente de https://ollama.com/download e salve em bin/ollama"
-        rm -f "$OLLAMA_BIN"
+        log "       URL tentada: $OLLAMA_URL"
+        rm -f "$OLLAMA_TMP_TAR"
     fi
 fi
 
