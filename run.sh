@@ -74,6 +74,66 @@ limpar_cache_python() {
 }
 
 # ----------------------------------------------------------------------
+# Verificar e baixar modelo Moondream via Ollama
+
+verificar_modelo_ollama() {
+    local OLLAMA_BIN="$PROJECT_DIR/bin/ollama"
+
+    if [ ! -f "$OLLAMA_BIN" ]; then
+        log "AVISO: bin/ollama ausente — verificação de modelo ignorada"
+        return 0
+    fi
+
+    # Verificar se o modelo já está baixado
+    export OLLAMA_HOST="127.0.0.1:$OLLAMA_PORT"
+    export OLLAMA_MODELS="$OLLAMA_MODELS"
+
+    if [ -d "$OLLAMA_MODELS/manifests" ] && \
+       find "$OLLAMA_MODELS/manifests" -name "moondream" -type d 2>/dev/null | grep -q .; then
+        log "Modelo Moondream já presente em $OLLAMA_MODELS"
+        return 0
+    fi
+
+    log "Modelo Moondream não encontrado — iniciando download..."
+    log "Isso pode levar alguns minutos na primeira execução."
+
+    # Subir Ollama temporariamente para baixar o modelo
+    local OLLAMA_TMPDIR_LOCAL="$OLLAMA_TMPDIR"
+    mkdir -p "$OLLAMA_TMPDIR_LOCAL"
+    mkdir -p "$OLLAMA_MODELS"
+
+    OLLAMA_TMPDIR="$OLLAMA_TMPDIR_LOCAL" "$OLLAMA_BIN" serve &
+    local SERVE_PID=$!
+
+    # Aguardar Ollama ficar pronto (máximo 30s)
+    local ESPERA=0
+    while ! curl -s "http://127.0.0.1:$OLLAMA_PORT/api/tags" >/dev/null 2>&1; do
+        sleep 1
+        ESPERA=$((ESPERA + 1))
+        if [ "$ESPERA" -ge 30 ]; then
+            log "AVISO: Ollama não respondeu em 30s — download do modelo ignorado"
+            kill -TERM "$SERVE_PID" 2>/dev/null || true
+            wait "$SERVE_PID" 2>/dev/null || true
+            return 0
+        fi
+    done
+
+    # Baixar modelo com timeout de 600s (10 min)
+    log "Baixando Moondream via Ollama..."
+    if timeout 600 "$OLLAMA_BIN" pull moondream 2>&1 | while IFS= read -r linha; do
+        log "  $linha"
+    done; then
+        log "Modelo Moondream baixado com sucesso."
+    else
+        log "AVISO: Falha ou timeout ao baixar Moondream — tente novamente depois."
+    fi
+
+    # Encerrar Ollama temporário pelo PID exato (ADR-03)
+    kill -TERM "$SERVE_PID" 2>/dev/null || true
+    wait "$SERVE_PID" 2>/dev/null || true
+}
+
+# ----------------------------------------------------------------------
 # Função de limpeza — executada SEMPRE ao sair (trap EXIT)
 # Flag evita dupla execução em caso de sinais sobrepostos
 
@@ -96,7 +156,7 @@ cleanup() {
     log "Limpando cache Python..."
     limpar_cache_python
 
-    log "Limpeza concluida. Ate a proxima."
+    log "Limpeza concluída. Até a próxima."
 }
 
 trap cleanup EXIT
@@ -107,18 +167,18 @@ trap 'exit 143' TERM   # SIGTERM → EXIT trap executa cleanup
 # PRE-FLIGHT: verificar display GTK
 
 if [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ]; then
-    fail "Nenhum display detectado (DISPLAY/WAYLAND_DISPLAY ausentes).\n       O Beholder requer interface grafica GTK4."
+    fail "Nenhum display detectado (DISPLAY/WAYLAND_DISPLAY ausentes).\n       O Beholder requer interface gráfica GTK4."
 fi
 
 # ----------------------------------------------------------------------
 # PRE-FLIGHT: instalar venv se ausente
 
 if [ ! -f "$VENV_DIR/bin/python" ]; then
-    log "Ambiente virtual nao encontrado — executando install.sh..."
+    log "Ambiente virtual não encontrado — executando install.sh..."
     bash "$PROJECT_DIR/install.sh"
 fi
 
-# Verificacao minima de integridade do venv
+# Verificação mínima de integridade do venv
 "$VENV_DIR/bin/python" -c "import src" 2>/dev/null \
     || fail "venv parece corrompido. Execute: ./install.sh"
 
@@ -139,6 +199,9 @@ if [ -d "$OLLAMA_TMPDIR" ]; then
     rm -rf "$OLLAMA_TMPDIR"
 fi
 
+# PRE-FLIGHT: verificar modelo Moondream
+verificar_modelo_ollama
+
 # ----------------------------------------------------------------------
 # INICIAR
 
@@ -153,4 +216,4 @@ python3 "$PROJECT_DIR/main.py"
 
 # (cleanup é chamado automaticamente pelo trap EXIT ao sair do python)
 
-# "A felicidade da sua vida depende da qualidade dos seus pensamentos." — Marco Aurelio
+# "A felicidade da sua vida depende da qualidade dos seus pensamentos." — Marco Aurélio

@@ -23,7 +23,7 @@ separador() { echo "------------------------------------------------------------
 # Verificamos quais pacotes faltam antes de chamar sudo (evita sudo desnecessário).
 
 separador
-log "0/5 — Dependencias de sistema (GTK4)..."
+log "0/5 — Dependências de sistema (GTK4)..."
 
 PKGS_NECESSARIOS=(
     python3-gi
@@ -45,7 +45,7 @@ if [ ${#PKGS_FALTANDO[@]} -gt 0 ]; then
     sudo apt-get install -y "${PKGS_FALTANDO[@]}"
     ok "Pacotes de sistema instalados"
 else
-    ok "Dependencias de sistema ja presentes"
+    ok "Dependências de sistema já presentes"
 fi
 
 # ----------------------------------------------------------------------
@@ -65,7 +65,7 @@ for candidato in python3.12 python3.13 python3 python; do
 done
 
 if [ -z "$PYTHON_BIN" ]; then
-    fail "Python 3.12+ nao encontrado. Instale com: sudo apt install python3.12"
+    fail "Python 3.12+ não encontrado. Instale com: sudo apt install python3.12"
 fi
 
 PYTHON_VER=$("$PYTHON_BIN" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')")
@@ -78,14 +78,14 @@ separador
 log "2/5 — Ambiente virtual..."
 
 if [ -d "$VENV_DIR" ] && [ -f "$VENV_DIR/bin/python" ]; then
-    ok "venv ja existe em .venv/"
+    ok "venv já existe em .venv/"
 else
     if [ -d "$VENV_DIR" ]; then
         log "venv corrompido, recriando..."
         rm -rf "$VENV_DIR"
     fi
     log "Criando .venv/ com $PYTHON_BIN..."
-    "$PYTHON_BIN" -m venv "$VENV_DIR"
+    "$PYTHON_BIN" -m venv --system-site-packages "$VENV_DIR"
     ok "venv criado"
 fi
 
@@ -96,7 +96,7 @@ PIP_VENV="$VENV_DIR/bin/pip"
 # 3. Instalar dependências
 
 separador
-log "3/5 — Instalando dependencias..."
+log "3/5 — Instalando dependências..."
 
 "$PIP_VENV" install --quiet --upgrade pip setuptools wheel
 
@@ -111,14 +111,14 @@ ok "requirements.txt instalado"
 if "$VENV_DIR/bin/playwright" install chromium --quiet 2>/dev/null; then
     ok "Playwright chromium instalado"
 else
-    log "AVISO: playwright chromium nao instalado — modo furtivo indisponivel"
+    log "AVISO: playwright chromium não instalado — modo furtivo indisponível"
 fi
 
 # ----------------------------------------------------------------------
 # 4. Instalar hooks git
 
 separador
-log "4/5 — Configurando hooks git e diretorios..."
+log "4/5 — Configurando hooks git e diretórios..."
 
 # Garantir que diretórios do projeto existem (isolados dentro do projeto)
 mkdir -p "$PROJECT_DIR/bin"
@@ -127,7 +127,7 @@ mkdir -p "$PROJECT_DIR/data/sessao_atual"
 mkdir -p "$PROJECT_DIR/data/ollama_tmp"
 mkdir -p "$PROJECT_DIR/output"
 mkdir -p "$PROJECT_DIR/logs"
-ok "Diretorios do projeto criados"
+ok "Diretórios do projeto criados"
 
 
 if [ -d "$PROJECT_DIR/.git" ]; then
@@ -137,7 +137,7 @@ if [ -d "$PROJECT_DIR/.git" ]; then
     chmod +x "$PROJECT_DIR/.git/hooks/pre-commit"
     chmod +x "$PROJECT_DIR/.git/hooks/commit-msg"
 
-    # pre-commit framework (se disponivel no venv)
+    # pre-commit framework (se disponível no venv)
     if [ -f "$VENV_DIR/bin/pre-commit" ]; then
         "$VENV_DIR/bin/pre-commit" install --hook-type pre-commit >/dev/null 2>&1 || true
         "$VENV_DIR/bin/pre-commit" install --hook-type commit-msg  >/dev/null 2>&1 || true
@@ -145,27 +145,65 @@ if [ -d "$PROJECT_DIR/.git" ]; then
     fi
     ok "hooks git configurados"
 else
-    log "AVISO: repositorio git nao encontrado — hooks nao instalados"
+    log "AVISO: repositório git não encontrado — hooks não instalados"
+fi
+
+# Instalar .desktop e ícone
+DESKTOP_FILE="$HOME/.local/share/applications/com.beholder.app.desktop"
+ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
+ICON_FILE="$ICON_DIR/com.beholder.app.png"
+
+mkdir -p "$(dirname "$DESKTOP_FILE")"
+mkdir -p "$ICON_DIR"
+
+if [ -f "$PROJECT_DIR/beholder-icon.png" ]; then
+    cp "$PROJECT_DIR/beholder-icon.png" "$ICON_FILE"
+    ok "Ícone instalado em $ICON_FILE"
+else
+    log "AVISO: beholder-icon.png não encontrado — ícone não instalado"
+fi
+
+cat > "$DESKTOP_FILE" << 'DESKTOP'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Beholder
+Comment=Motor de predação visual de assets de interface
+Exec=EXEC_PLACEHOLDER
+Icon=com.beholder.app
+Terminal=false
+Categories=Development;Graphics;
+Keywords=design;assets;scraper;vision;
+DESKTOP
+
+# Substituir placeholder pelo caminho real
+sed -i "s|EXEC_PLACEHOLDER|$PROJECT_DIR/run.sh|g" "$DESKTOP_FILE"
+
+ok "Arquivo .desktop criado em $DESKTOP_FILE"
+
+# Atualizar cache de aplicações
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 fi
 
 # ----------------------------------------------------------------------
 # 5. Verificação final (doctor)
 
 separador
-log "5/5 — Verificacao final..."
+log "5/5 — Verificação final..."
 
-"$PYTHON_VENV" -c "import gi; gi.require_version('Gtk', '4.0'); from gi.repository import Gtk; print('[install] OK: GTK4')"         2>/dev/null || log "AVISO: GTK4 nao disponivel — interface grafica nao vai funcionar"
-"$PYTHON_VENV" -c "import gi; gi.require_version('Adw', '1');  from gi.repository import Adw; print('[install] OK: Libadwaita')"   2>/dev/null || log "AVISO: Libadwaita nao disponivel"
-"$PYTHON_VENV" -c "from sklearn.cluster import KMeans; print('[install] OK: scikit-learn')"                                        2>/dev/null || log "AVISO: scikit-learn nao disponivel"
-"$PYTHON_VENV" -c "import cv2; print('[install] OK: OpenCV')"                                                                      2>/dev/null || log "AVISO: OpenCV nao disponivel"
+"$PYTHON_VENV" -c "import gi; gi.require_version('Gtk', '4.0'); from gi.repository import Gtk; print('[install] OK: GTK4')"         2>/dev/null || log "AVISO: GTK4 não disponível — interface gráfica não vai funcionar"
+"$PYTHON_VENV" -c "import gi; gi.require_version('Adw', '1');  from gi.repository import Adw; print('[install] OK: Libadwaita')"   2>/dev/null || log "AVISO: Libadwaita não disponível"
+"$PYTHON_VENV" -c "from sklearn.cluster import KMeans; print('[install] OK: scikit-learn')"                                        2>/dev/null || log "AVISO: scikit-learn não disponível"
+"$PYTHON_VENV" -c "import cv2; print('[install] OK: OpenCV')"                                                                      2>/dev/null || log "AVISO: OpenCV não disponível"
 "$PYTHON_VENV" -c "import src; print('[install] OK: pacote src importavel')"
 
-[ -f "$PROJECT_DIR/bin/ollama" ] && ok "bin/ollama presente" || log "AVISO: bin/ollama ausente — analise de IA indisponivel (baixe em ollama.com)"
+[ -f "$PROJECT_DIR/bin/ollama" ] && ok "bin/ollama presente" || log "AVISO: bin/ollama ausente — análise de IA indisponível (baixe em ollama.com)"
 
 separador
 echo ""
-echo "Instalacao concluida."
+echo "Instalação concluída."
 echo "Para iniciar o Beholder: ./run.sh"
 echo ""
 
-# "A sabedoria nao e dada — e conquistada." — Seneca
+# "A sabedoria não é dada — é conquistada." — Sêneca
