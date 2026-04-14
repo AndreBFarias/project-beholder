@@ -180,6 +180,19 @@ Nenhum bug pendente.
 | AUD-21 | Hover secondary: #555770 substituído por DRACULA_COMMENT #6272a4 |
 | AUD-22 | DRACULA_YELLOW: adicionado .status-dot-aviso no CSS + constantes ANSI Bright completas |
 
+## Modelos de Visão
+
+3 tiers de modelos, todos baixados automaticamente pelo install.sh e run.sh:
+
+| Tier | Modelo | VRAM | Uso |
+|------|--------|------|-----|
+| Low | moondream | ~1.7 GB | Rápido, qualidade básica |
+| Medium | minicpm-v | ~2.5 GB | Equilíbrio qualidade/velocidade |
+| High | llava:7b | ~4.5 GB | Melhor precisão, mais lento |
+
+Seleção de tier via Grimório → Inteligência Artificial → Modelo IA.
+O modelo é resolvido em runtime por `moondream_prompt._resolver_modelo()`.
+
 ## Distribuição
 
 O Beholder suporta 3 formatos de distribuição (Sprint 14):
