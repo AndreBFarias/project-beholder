@@ -10,7 +10,8 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-LOGS_DIR = Path("logs")
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+LOGS_DIR = _PROJECT_ROOT / "logs"
 LOG_FILE = LOGS_DIR / "beholder.log"
 LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)-25s | %(message)s"
 LOG_MAX_BYTES = 10 * 1024 * 1024  # 10 MB

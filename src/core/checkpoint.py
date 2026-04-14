@@ -12,7 +12,8 @@ from pathlib import Path
 
 logger = logging.getLogger("beholder.checkpoint")
 
-CHECKPOINT_PATH = Path("data/sessao_atual/.checkpoint.json")
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+CHECKPOINT_PATH = _PROJECT_ROOT / "data" / "sessao_atual" / ".checkpoint.json"
 
 
 @dataclass
