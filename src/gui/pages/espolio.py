@@ -21,6 +21,7 @@ from src.core.asset_queue import AssetProcessado, fila_processada
 from src.core.config.defaults import DEFAULTS
 from src.exporter.dataset_writer import escrever_csv
 from src.exporter.packer import Packer
+from src.gui.widgets import LogTerminal
 
 logger = logging.getLogger("beholder.gui.espolio")
 
@@ -84,6 +85,7 @@ class EspolioPage(Gtk.Box):
             lbl_chave.set_xalign(1)
 
             lbl_valor = Gtk.Label(label=valor)
+            lbl_valor.add_css_class("sidebar-module-name")
             lbl_valor.set_xalign(0)
             self._labels_valores[chave] = lbl_valor
 
@@ -131,20 +133,10 @@ class EspolioPage(Gtk.Box):
 
         # Log de operações
         log_frame = Gtk.Frame(label="Log")
-        log_scroll = Gtk.ScrolledWindow()
-        log_scroll.set_vexpand(True)
-        log_scroll.set_min_content_height(120)
-        log_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-
-        self._label_log = Gtk.Label(label="Aguardando operação...")
-        self._label_log.add_css_class("section-title")
-        self._label_log.set_vexpand(True)
-        self._label_log.set_valign(Gtk.Align.START)
-        self._label_log.set_xalign(0)
-        self._label_log.set_wrap(True)
-
-        log_scroll.set_child(self._label_log)
-        log_frame.set_child(log_scroll)
+        self._log_terminal = LogTerminal()
+        self._log_terminal.set_min_content_height(120)
+        self._log_terminal.append_line("Aguardando operação...")
+        log_frame.set_child(self._log_terminal)
         self.append(log_frame)
 
         # Lista de pacotes gerados
@@ -280,7 +272,7 @@ class EspolioPage(Gtk.Box):
                 self._cb_log(f"[ERRO] {exc}")
 
     def _cb_log(self, msg: str) -> None:
-        self._label_log.set_label(msg)
+        self._log_terminal.append_line(msg)
         logger.info("Espólio: %s", msg)
 
     def _cb_pacote_concluido(self, caminho_zip: str) -> None:

@@ -67,6 +67,7 @@ class CacadaPage(Gtk.Box):
 
         # Botões de ação
         btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        btn_row.set_margin_top(4)
 
         self._btn_iniciar = Gtk.Button(label="INICIAR")
         self._btn_iniciar.add_css_class("btn-primary")
