@@ -13,7 +13,9 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="$PROJECT_DIR/.venv"
 OLLAMA_PORT=11435
-OLLAMA_TMPDIR="/tmp/ollama_beholder"
+# Tudo relacionado ao Ollama fica dentro do projeto — nada em ~/.ollama ou /tmp
+OLLAMA_TMPDIR="$PROJECT_DIR/data/ollama_tmp"
+OLLAMA_MODELS="$PROJECT_DIR/models"
 
 cd "$PROJECT_DIR"
 
@@ -142,6 +144,11 @@ fi
 
 log "Iniciando Beholder..."
 source "$VENV_DIR/bin/activate"
+
+# Exportar variáveis de ambiente do Ollama para isolar tudo dentro do projeto
+export OLLAMA_MODELS="$OLLAMA_MODELS"
+export OLLAMA_TMPDIR="$OLLAMA_TMPDIR"
+
 python3 "$PROJECT_DIR/main.py"
 
 # (cleanup é chamado automaticamente pelo trap EXIT ao sair do python)

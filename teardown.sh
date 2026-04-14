@@ -6,7 +6,9 @@
 # Mata o Ollama pelo PID exato via porta 11435 — nunca pkill -f ollama.
 
 OLLAMA_PORT=11435
-OLLAMA_TMPDIR="/tmp/ollama_beholder"
+# Caminho do OLLAMA_TMPDIR dentro do projeto (não em /tmp)
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+OLLAMA_TMPDIR="$PROJECT_DIR/data/ollama_tmp"
 
 log()  { echo "[teardown] $*"; }
 

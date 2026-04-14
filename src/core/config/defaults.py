@@ -21,7 +21,9 @@ DEFAULTS: dict = {
         "modelo": "moondream",
         "max_concurrent": 1,
         "timeout_analise": 60,
-        "ollama_tmpdir": "/tmp/ollama_beholder",
+        # Caminhos relativos ao PROJECT_DIR — tudo isolado dentro do projeto
+        "ollama_tmpdir": "data/ollama_tmp",
+        "ollama_models": "models",
     },
     "Saida": {
         "diretorio_output": "output",

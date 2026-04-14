@@ -6,7 +6,7 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV_DIR="$PROJECT_DIR/.venv"
 OLLAMA_PORT=11435
-OLLAMA_TMPDIR="/tmp/ollama_beholder"
+OLLAMA_TMPDIR="$PROJECT_DIR/data/ollama_tmp"
 
 cd "$PROJECT_DIR"
 
