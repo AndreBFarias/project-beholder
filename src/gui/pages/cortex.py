@@ -115,6 +115,10 @@ class CortexPage(Gtk.Box):
         )
         self._build_ui()
 
+    def conectar_espolio(self, espolio_page) -> None:
+        """Conecta o Córtex ao Espólio para alimentar contadores de exportação."""
+        self._espolio = espolio_page
+
     def _build_ui(self) -> None:
         # Título
         titulo = Gtk.Label(label="Córtex")
@@ -301,14 +305,16 @@ class CortexPage(Gtk.Box):
         self._log_ia.append_line(msg)
 
     def _cb_asset_processado(self, asset: AssetProcessado) -> None:
-        """Recebe asset analisado e adiciona ao grid."""
-        # Remove placeholder na primeira análise
+        """Recebe asset analisado, adiciona ao grid e registra no Espólio."""
         if self._row_placeholder:
             self._listbox_grid.remove(self._row_placeholder)
             self._row_placeholder = None
 
         card = _criar_card_asset(asset)
         self._listbox_grid.prepend(card)
+
+        if hasattr(self, "_espolio") and self._espolio:
+            self._espolio.registrar_asset(asset)
 
     def _cb_orquestrador_concluido(self, total: int) -> None:
         """Orchestrator encerrou."""
