@@ -80,7 +80,7 @@ listbox row:hover,
     border-top: 1px solid {DRACULA_CURRENT};
     padding: 5px 12px;
     font-family: monospace;
-    font-size: 13px;
+    font-size: 15px;
     color: {DRACULA_COMMENT};
 }}
 .status-dot-ativo {{

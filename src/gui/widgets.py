@@ -27,7 +27,7 @@ class StatusBar(Gtk.Box):
         self._build_ui()
 
     def _build_ui(self) -> None:
-        self._label_status = Gtk.Label(label=" nova")
+        self._label_status = Gtk.Label(label=" Nova")
         self._label_status.add_css_class("status-dot-ativo")
         self._label_status.set_xalign(0)
 
@@ -37,7 +37,7 @@ class StatusBar(Gtk.Box):
         self._label_vram = Gtk.Label(label="VRAM: -- GB")
         self._label_vram.set_xalign(0)
 
-        self._label_sessao = Gtk.Label(label="sessão: nova")
+        self._label_sessao = Gtk.Label(label="Sessão: Nova")
         self._label_sessao.set_xalign(0)
 
         sep1 = Gtk.Label(label="|")
@@ -84,7 +84,7 @@ class StatusBar(Gtk.Box):
         elif status == "concluída":
             css_class = "status-dot-concluido"
 
-        self._label_status.set_label(f"{icone} {status}")
+        self._label_status.set_label(f"{icone} {status.capitalize()}")
         self._label_status.remove_css_class("status-dot-ativo")
         self._label_status.remove_css_class("status-dot-pausado")
         self._label_status.remove_css_class("status-dot-erro")
@@ -96,7 +96,7 @@ class StatusBar(Gtk.Box):
         vram_str = f"{vram_gb:.1f} GB" if vram_gb is not None else "-- GB"
         self._label_vram.set_label(f"VRAM: {vram_str}")
 
-        self._label_sessao.set_label(f"sessão: {sessao}")
+        self._label_sessao.set_label(f"Sessão: {sessao.capitalize()}")
 
 
 class LogTerminal(Gtk.ScrolledWindow):
