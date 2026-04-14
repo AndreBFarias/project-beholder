@@ -281,7 +281,10 @@ class CortexPage(Gtk.Box):
 
         self._set_status("ativo", css="status-dot-concluido")
         self._label_vram.set_label("VRAM: -- GB")
-        self._label_modelo.set_label(f"Modelo: {DEFAULTS['IA']['modelo']}")
+        tier = DEFAULTS["IA"].get("modelo_tier", "low")
+        modelos = DEFAULTS["IA"].get("modelos_disponiveis", {})
+        nome_modelo = modelos.get(tier, {}).get("nome", DEFAULTS["IA"]["modelo"])
+        self._label_modelo.set_label(f"Modelo: {nome_modelo}")
         self._btn_expurgar.set_sensitive(True)
         self._btn_pausar_ia.set_sensitive(True)
         self._log_ia.append_line(f"[OK] {msg}")

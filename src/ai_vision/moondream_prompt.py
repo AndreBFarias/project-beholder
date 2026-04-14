@@ -19,8 +19,17 @@ logger = logging.getLogger("beholder.ai_vision.moondream_prompt")
 
 _cfg = DEFAULTS["IA"]
 _BASE_URL = f"http://127.0.0.1:{_cfg['ollama_port']}"
-_MODELO = _cfg["modelo"]
 _TIMEOUT = _cfg["timeout_analise"]
+
+
+def _resolver_modelo() -> str:
+    """Resolve o nome do modelo a partir do tier configurado."""
+    tier = _cfg.get("modelo_tier", "low")
+    modelos = _cfg.get("modelos_disponiveis", {})
+    if tier in modelos:
+        return modelos[tier]["nome"]
+    return _cfg["modelo"]
+
 
 PROMPT_CLASSIFICACAO = (
     "Analyze this image and respond ONLY with valid JSON, no other text: "
@@ -50,7 +59,7 @@ def analisar_imagem(caminho: str | Path) -> dict:
         return _FALLBACK.copy()
 
     payload = {
-        "model": _MODELO,
+        "model": _resolver_modelo(),
         "prompt": PROMPT_CLASSIFICACAO,
         "images": [imagem_b64],
         "stream": False,

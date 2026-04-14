@@ -74,35 +74,48 @@ limpar_cache_python() {
 }
 
 # ----------------------------------------------------------------------
-# Verificar e baixar modelo Moondream via Ollama
+# Modelos de visão — 3 tiers (sincronizado com defaults.py)
+MODELOS_VISAO="moondream minicpm-v llava:7b"
 
-verificar_modelo_ollama() {
+# Verificar e baixar modelos de visão via Ollama
+
+verificar_modelos_ollama() {
     local OLLAMA_BIN="$PROJECT_DIR/bin/ollama"
 
     if [ ! -f "$OLLAMA_BIN" ]; then
-        log "AVISO: bin/ollama ausente — verificação de modelo ignorada"
+        log "AVISO: bin/ollama ausente — verificação de modelos ignorada"
         return 0
     fi
 
-    # Verificar se o modelo já está baixado
     export OLLAMA_HOST="127.0.0.1:$OLLAMA_PORT"
     export OLLAMA_MODELS="$OLLAMA_MODELS"
 
-    if [ -d "$OLLAMA_MODELS/manifests" ] && \
-       find "$OLLAMA_MODELS/manifests" -name "moondream" -type d 2>/dev/null | grep -q .; then
-        log "Modelo Moondream já presente em $OLLAMA_MODELS"
+    # Verificar quais modelos faltam
+    local FALTANDO=""
+    for modelo in $MODELOS_VISAO; do
+        local nome_dir
+        nome_dir=$(echo "$modelo" | tr ':' '/')
+        if [ -d "$OLLAMA_MODELS/manifests" ] && \
+           find "$OLLAMA_MODELS/manifests" -path "*${nome_dir}*" -type f 2>/dev/null | grep -q .; then
+            log "Modelo $modelo já presente."
+        else
+            FALTANDO="$FALTANDO $modelo"
+        fi
+    done
+
+    if [ -z "$FALTANDO" ]; then
+        log "Todos os modelos de visão já presentes."
         return 0
     fi
 
-    log "Modelo Moondream não encontrado — iniciando download..."
-    log "Isso pode levar alguns minutos na primeira execução."
+    log "Modelos ausentes:$FALTANDO"
+    log "Iniciando download — isso pode levar vários minutos na primeira execução."
 
-    # Subir Ollama temporariamente para baixar o modelo
-    local OLLAMA_TMPDIR_LOCAL="$OLLAMA_TMPDIR"
-    mkdir -p "$OLLAMA_TMPDIR_LOCAL"
+    # Subir Ollama temporariamente para baixar os modelos
+    mkdir -p "$OLLAMA_TMPDIR"
     mkdir -p "$OLLAMA_MODELS"
 
-    OLLAMA_TMPDIR="$OLLAMA_TMPDIR_LOCAL" "$OLLAMA_BIN" serve &
+    OLLAMA_TMPDIR="$OLLAMA_TMPDIR" "$OLLAMA_BIN" serve &
     local SERVE_PID=$!
 
     # Aguardar Ollama ficar pronto (máximo 30s)
@@ -111,22 +124,24 @@ verificar_modelo_ollama() {
         sleep 1
         ESPERA=$((ESPERA + 1))
         if [ "$ESPERA" -ge 30 ]; then
-            log "AVISO: Ollama não respondeu em 30s — download do modelo ignorado"
+            log "AVISO: Ollama não respondeu em 30s — download dos modelos ignorado"
             kill -TERM "$SERVE_PID" 2>/dev/null || true
             wait "$SERVE_PID" 2>/dev/null || true
             return 0
         fi
     done
 
-    # Baixar modelo com timeout de 600s (10 min)
-    log "Baixando Moondream via Ollama..."
-    if timeout 600 "$OLLAMA_BIN" pull moondream 2>&1 | while IFS= read -r linha; do
-        log "  $linha"
-    done; then
-        log "Modelo Moondream baixado com sucesso."
-    else
-        log "AVISO: Falha ou timeout ao baixar Moondream — tente novamente depois."
-    fi
+    # Baixar cada modelo ausente (timeout 15 min por modelo)
+    for modelo in $FALTANDO; do
+        log "Baixando $modelo..."
+        if timeout 900 "$OLLAMA_BIN" pull "$modelo" 2>&1 | while IFS= read -r linha; do
+            log "  $linha"
+        done; then
+            log "Modelo $modelo baixado com sucesso."
+        else
+            log "AVISO: Falha ou timeout ao baixar $modelo — tente novamente depois."
+        fi
+    done
 
     # Encerrar Ollama temporário pelo PID exato (ADR-03)
     kill -TERM "$SERVE_PID" 2>/dev/null || true
@@ -215,8 +230,8 @@ if [ ! -f "$OLLAMA_BIN" ]; then
     fi
 fi
 
-# PRE-FLIGHT: verificar modelo Moondream
-verificar_modelo_ollama
+# PRE-FLIGHT: verificar modelos de visão (moondream, minicpm-v, llava:7b)
+verificar_modelos_ollama
 
 # ----------------------------------------------------------------------
 # INICIAR

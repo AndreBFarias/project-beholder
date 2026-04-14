@@ -111,11 +111,28 @@ class GrimorioPage(Gtk.Box):
         ia_box.set_margin_end(8)
 
         row_porta, self._entry_porta = _criar_linha_config("Porta Ollama:", "11435")
-        row_modelo, self._entry_modelo = _criar_linha_config("Modelo:", "moondream")
         row_timeout_ia, self._entry_timeout_ia = _criar_linha_config("Timeout análise (s):", "60")
 
+        # Seletor de tier de modelo (low/medium/high)
+        row_tier = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        lbl_tier = Gtk.Label(label="Modelo IA:")
+        lbl_tier.add_css_class("section-title")
+        lbl_tier.set_xalign(0)
+        lbl_tier.set_size_request(180, -1)
+
+        self._combo_tier = Gtk.ComboBoxText()
+        modelos = DEFAULTS["IA"]["modelos_disponiveis"]
+        for tier_id, info in modelos.items():
+            self._combo_tier.append(
+                tier_id,
+                f"{tier_id.upper()} — {info['nome']} ({info['vram_gb']} GB) — {info['descricao']}",
+            )
+        self._combo_tier.set_hexpand(True)
+        row_tier.append(lbl_tier)
+        row_tier.append(self._combo_tier)
+
         ia_box.append(row_porta)
-        ia_box.append(row_modelo)
+        ia_box.append(row_tier)
         ia_box.append(row_timeout_ia)
         ia_frame.set_child(ia_box)
         conteudo.append(ia_frame)
@@ -187,7 +204,8 @@ class GrimorioPage(Gtk.Box):
         self._entry_delay_max.set_text(str(self._cfg.get("Scraper", "delay_max")))
         self._entry_retries.set_text(str(self._cfg.get("Scraper", "max_retries")))
         self._entry_porta.set_text(str(self._cfg.get("IA", "ollama_port")))
-        self._entry_modelo.set_text(str(self._cfg.get("IA", "modelo")))
+        tier_atual = str(self._cfg.get("IA", "modelo_tier") or "low")
+        self._combo_tier.set_active_id(tier_atual)
         self._entry_timeout_ia.set_text(str(self._cfg.get("IA", "timeout_analise")))
         self._entry_output.set_text(str(self._cfg.get("Saida", "diretorio_output")))
         self._entry_kmeans.set_text(str(self._cfg.get("Saida", "kmeans_cores")))
@@ -204,7 +222,11 @@ class GrimorioPage(Gtk.Box):
             self._cfg.set("Scraper", "delay_max", self._entry_delay_max.get_text().strip())
             self._cfg.set("Scraper", "max_retries", self._entry_retries.get_text().strip())
             self._cfg.set("IA", "ollama_port", self._entry_porta.get_text().strip())
-            self._cfg.set("IA", "modelo", self._entry_modelo.get_text().strip())
+            tier_selecionado = self._combo_tier.get_active_id() or "low"
+            self._cfg.set("IA", "modelo_tier", tier_selecionado)
+            modelos = DEFAULTS["IA"]["modelos_disponiveis"]
+            if tier_selecionado in modelos:
+                self._cfg.set("IA", "modelo", modelos[tier_selecionado]["nome"])
             self._cfg.set("IA", "timeout_analise", self._entry_timeout_ia.get_text().strip())
             self._cfg.set("Saida", "diretorio_output", self._entry_output.get_text().strip())
             self._cfg.set("Saida", "kmeans_cores", self._entry_kmeans.get_text().strip())
