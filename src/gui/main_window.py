@@ -88,6 +88,9 @@ class BeholderWindow(Adw.ApplicationWindow):
             "grimorio": GrimorioPage(),
         }
 
+        # Conectar Córtex → Espólio (BUG-05)
+        self._paginas["cortex"].conectar_espolio(self._paginas["espolio"])
+
         for modulo_id, pagina in self._paginas.items():
             self._stack.add_named(pagina, modulo_id)
 
