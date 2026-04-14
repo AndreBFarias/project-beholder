@@ -114,8 +114,8 @@ fila_scraper.put(None)  # Thread B para quando recebe None
 | 8 | COMPLETA | Protocolo: batch + checkpoints |
 | 9 | COMPLETA | Grimório: configurações persistidas |
 | 10 | COMPLETA | Polish visual das 5 abas |
-| 11 | BACKLOG | UI: Espólio redesign + textos + status bar (#6) |
-| 12 | BACKLOG | Instalação: .desktop + moondream + venv fix (#7) |
+| 11 | COMPLETA | UI: Espólio redesign + textos + status bar (#6) |
+| 12 | COMPLETA | Instalação: .desktop + moondream + venv fix (#7) |
 | 13 | COMPLETA | Correções retroativas da auditoria (#8) |
 | 14 | BACKLOG | Packaging: deb + flatpak + appimage (#9) |
 | 15 | BACKLOG | Workflow CI/CD + pre-commit screenshots (#10) |
@@ -124,9 +124,13 @@ fila_scraper.put(None)  # Thread B para quando recebe None
 
 ### Pendentes
 
-| ID | Arquivo | Problema |
-|----|---------|---------|
-| BUG-01 | `install.sh:88` | venv sem `--system-site-packages` — GTK4 pode não funcionar (Sprint 12) |
+Nenhum bug pendente.
+
+### Resolvidos (Sprint 12)
+
+| ID | Correção |
+|----|----------|
+| BUG-01 | `--system-site-packages` adicionado ao venv no install.sh |
 
 ### Resolvidos (Sprint 13)
 
