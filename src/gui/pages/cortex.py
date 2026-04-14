@@ -219,7 +219,7 @@ class CortexPage(Gtk.Box):
 
         # Log do orquestrador (lateral direita)
         log_frame = Gtk.Frame(label="Log IA")
-        log_frame.set_size_request(300, -1)
+        log_frame.set_size_request(180, -1)
         self._log_ia = LogTerminal()
         log_frame.set_child(self._log_ia)
         area_box.append(log_frame)

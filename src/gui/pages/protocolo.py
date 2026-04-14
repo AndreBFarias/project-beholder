@@ -58,12 +58,13 @@ class ProtocoloPage(Gtk.Box):
 
         # Adicionar URL individual
         add_frame = Gtk.Frame(label="Adicionar URL")
-        add_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        add_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         add_box.set_margin_top(8)
         add_box.set_margin_bottom(8)
         add_box.set_margin_start(8)
         add_box.set_margin_end(8)
 
+        url_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self._entry_nova_url = Gtk.Entry()
         self._entry_nova_url.set_placeholder_text("https://exemplo.com")
         self._entry_nova_url.set_hexpand(True)
@@ -73,13 +74,17 @@ class ProtocoloPage(Gtk.Box):
         self._btn_adicionar.add_css_class("btn-primary")
         self._btn_adicionar.connect("clicked", self._on_adicionar)
 
+        url_row.append(self._entry_nova_url)
+        url_row.append(self._btn_adicionar)
+
+        btn_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         self._btn_importar = Gtk.Button(label="IMPORTAR LISTA")
         self._btn_importar.add_css_class("btn-secondary")
         self._btn_importar.connect("clicked", self._on_importar_lista)
+        btn_row.append(self._btn_importar)
 
-        add_box.append(self._entry_nova_url)
-        add_box.append(self._btn_adicionar)
-        add_box.append(self._btn_importar)
+        add_box.append(url_row)
+        add_box.append(btn_row)
         add_frame.set_child(add_box)
         self.append(add_frame)
 
