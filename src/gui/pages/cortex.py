@@ -13,7 +13,7 @@ ADR-03: kill exclusivo pelo PID — NUNCA pkill -f ollama.
 
 import logging
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 
 from src.ai_vision.ollama_lifecycle import OllamaLifecycle
 from src.ai_vision.orchestrator import Orchestrator
@@ -61,7 +61,7 @@ def _criar_card_asset(asset: AssetProcessado) -> Gtk.ListBoxRow:
     lbl_desc = Gtk.Label(label=asset.descricao[:80] if asset.descricao else "—")
     lbl_desc.set_xalign(0)
     lbl_desc.set_hexpand(True)
-    lbl_desc.set_ellipsize(3)  # PANGO_ELLIPSIZE_END
+    lbl_desc.set_ellipsize(Pango.EllipsizeMode.END)
 
     linha1.append(badge_tipo)
     linha1.append(lbl_desc)
