@@ -12,6 +12,7 @@ import logging
 import threading
 from collections.abc import Callable
 from datetime import UTC, datetime
+from queue import Empty
 
 from gi.repository import GLib
 
@@ -108,7 +109,10 @@ class Orchestrator:
                 if self._evento_parar.is_set():
                     break
 
-                item = filas.scraper.get()
+                try:
+                    item = filas.scraper.get(timeout=1.0)
+                except Empty:
+                    continue
 
                 if item is SENTINEL:
                     logger.info("Orchestrator recebeu SENTINEL — encerrando")
@@ -122,10 +126,8 @@ class Orchestrator:
 
                 self._log(f"[INFO] Analisando: {asset_bruto.url}")
 
-                # Análise via Moondream (único ponto de contato com Ollama)
                 analise = analisar_imagem(asset_bruto.caminho_local)
 
-                # Paleta K-Means
                 paleta: list[str] = []
                 try:
                     paleta = extrair_paleta(asset_bruto.caminho_local, n_cores=self._kmeans_cores)
