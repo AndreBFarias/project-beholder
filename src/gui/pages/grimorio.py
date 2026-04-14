@@ -1,16 +1,27 @@
 """
-Módulo Grimório — Sprint 1: estrutura visual completa, sem backend conectado.
+Módulo Grimório — Configurações persistidas.
 
 Seções:
-- Scraper: timeouts, delays, jitter, retries
+- Scraper: timeout, delay_min, delay_max, max_retries
 - IA: porta Ollama, modelo, timeout de análise
 - Saída: diretório output, K-Means cores
-- Ações: SALVAR, TESTAR OLLAMA, RESTAURAR PADRÕES, ABRIR LOGS
+
+Ações:
+- SALVAR: persiste via Config.save()
+- TESTAR OLLAMA: ping na porta configurada
+- RESTAURAR PADRÕES: recarrega DEFAULTS e preenche campos
+- ABRIR LOGS: xdg-open logs/
 """
 
 import logging
+import subprocess
+from pathlib import Path
 
+import httpx
 from gi.repository import Gtk
+
+from src.core.config.config import Config
+from src.core.config.defaults import DEFAULTS
 
 logger = logging.getLogger("beholder.gui.grimorio")
 
@@ -41,7 +52,9 @@ class GrimorioPage(Gtk.Box):
         self.set_margin_bottom(20)
         self.set_margin_start(24)
         self.set_margin_end(24)
+        self._cfg = Config()
         self._build_ui()
+        self._carregar_valores()
 
     def _build_ui(self) -> None:
         # Título
@@ -123,6 +136,12 @@ class GrimorioPage(Gtk.Box):
         scroll.set_child(conteudo)
         self.append(scroll)
 
+        # Status label
+        self._label_status = Gtk.Label(label="")
+        self._label_status.add_css_class("section-title")
+        self._label_status.set_xalign(0)
+        self.append(self._label_status)
+
         # Ações
         acoes_frame = Gtk.Frame(label="Ações")
         acoes_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -133,15 +152,19 @@ class GrimorioPage(Gtk.Box):
 
         self._btn_salvar = Gtk.Button(label="SALVAR")
         self._btn_salvar.add_css_class("btn-primary")
+        self._btn_salvar.connect("clicked", self._on_salvar)
 
         self._btn_testar = Gtk.Button(label="TESTAR OLLAMA")
         self._btn_testar.add_css_class("btn-secondary")
+        self._btn_testar.connect("clicked", self._on_testar_ollama)
 
         self._btn_restaurar = Gtk.Button(label="RESTAURAR PADRÕES")
         self._btn_restaurar.add_css_class("btn-warning")
+        self._btn_restaurar.connect("clicked", self._on_restaurar)
 
         self._btn_logs = Gtk.Button(label="ABRIR LOGS")
         self._btn_logs.add_css_class("btn-secondary")
+        self._btn_logs.connect("clicked", self._on_abrir_logs)
 
         acoes_box.append(self._btn_salvar)
         acoes_box.append(self._btn_testar)
@@ -149,3 +172,77 @@ class GrimorioPage(Gtk.Box):
         acoes_box.append(self._btn_logs)
         acoes_frame.set_child(acoes_box)
         self.append(acoes_frame)
+
+    # ------------------------------------------------------------------
+    # Carregamento inicial
+    # ------------------------------------------------------------------
+
+    def _carregar_valores(self) -> None:
+        """Preenche os campos com os valores atuais (config ou defaults)."""
+        self._entry_timeout.set_text(str(self._cfg.get("Scraper", "timeout")))
+        self._entry_delay_min.set_text(str(self._cfg.get("Scraper", "delay_min")))
+        self._entry_delay_max.set_text(str(self._cfg.get("Scraper", "delay_max")))
+        self._entry_retries.set_text(str(self._cfg.get("Scraper", "max_retries")))
+        self._entry_porta.set_text(str(self._cfg.get("IA", "ollama_port")))
+        self._entry_modelo.set_text(str(self._cfg.get("IA", "modelo")))
+        self._entry_timeout_ia.set_text(str(self._cfg.get("IA", "timeout_analise")))
+        self._entry_output.set_text(str(self._cfg.get("Saida", "diretorio_output")))
+        self._entry_kmeans.set_text(str(self._cfg.get("Saida", "kmeans_cores")))
+
+    # ------------------------------------------------------------------
+    # Handlers de botão
+    # ------------------------------------------------------------------
+
+    def _on_salvar(self, _btn: Gtk.Button) -> None:
+        """Lê os campos e persiste via Config.save()."""
+        try:
+            self._cfg.set("Scraper", "timeout", self._entry_timeout.get_text().strip())
+            self._cfg.set("Scraper", "delay_min", self._entry_delay_min.get_text().strip())
+            self._cfg.set("Scraper", "delay_max", self._entry_delay_max.get_text().strip())
+            self._cfg.set("Scraper", "max_retries", self._entry_retries.get_text().strip())
+            self._cfg.set("IA", "ollama_port", self._entry_porta.get_text().strip())
+            self._cfg.set("IA", "modelo", self._entry_modelo.get_text().strip())
+            self._cfg.set("IA", "timeout_analise", self._entry_timeout_ia.get_text().strip())
+            self._cfg.set("Saida", "diretorio_output", self._entry_output.get_text().strip())
+            self._cfg.set("Saida", "kmeans_cores", self._entry_kmeans.get_text().strip())
+            self._cfg.save()
+            self._label_status.set_label("[OK] Configurações salvas.")
+            logger.info("Grimório: configurações salvas")
+        except Exception as exc:
+            self._label_status.set_label(f"[ERRO] {exc}")
+            logger.error("Falha ao salvar configurações: %s", exc)
+
+    def _on_testar_ollama(self, _btn: Gtk.Button) -> None:
+        """Faz ping na porta configurada do Ollama."""
+        porta = self._entry_porta.get_text().strip() or str(DEFAULTS["IA"]["ollama_port"])
+        url = f"http://127.0.0.1:{porta}/api/tags"
+        try:
+            with httpx.Client(timeout=2.0) as client:
+                resp = client.get(url)
+                if resp.status_code == 200:
+                    self._label_status.set_label(f"[OK] Ollama online na porta {porta}.")
+                else:
+                    self._label_status.set_label(f"[AVISO] Ollama respondeu HTTP {resp.status_code}.")
+        except httpx.ConnectError:
+            self._label_status.set_label(f"[OFFLINE] Ollama não responde na porta {porta}.")
+        except Exception as exc:
+            self._label_status.set_label(f"[ERRO] {exc}")
+        logger.info("Grimório: teste Ollama na porta %s", porta)
+
+    def _on_restaurar(self, _btn: Gtk.Button) -> None:
+        """Restaura valores padrão e atualiza os campos."""
+        self._cfg.restaurar_padroes()
+        self._cfg = Config()  # recarrega sem config.ini
+        self._carregar_valores()
+        self._label_status.set_label("[OK] Padrões restaurados.")
+        logger.info("Grimório: padrões restaurados")
+
+    def _on_abrir_logs(self, _btn: Gtk.Button) -> None:
+        """Abre a pasta logs/ com xdg-open."""
+        logs_dir = Path("logs")
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            subprocess.Popen(["xdg-open", str(logs_dir)])
+        except OSError as exc:
+            logger.error("Falha ao abrir logs: %s", exc)
+            self._label_status.set_label(f"[ERRO] {exc}")
