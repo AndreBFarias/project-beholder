@@ -11,7 +11,7 @@ Toda comunicação com Ollama passa aqui — nunca de fora deste módulo.
 import logging
 import threading
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from queue import Empty
 
 from gi.repository import GLib
@@ -141,7 +141,7 @@ class Orchestrator:
                     descricao=analise.get("descricao", ""),
                     tags=analise.get("tags", []),
                     paleta_hex=paleta,
-                    timestamp=datetime.now(UTC).isoformat(),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                 )
 
                 filas.processada.put(processado)

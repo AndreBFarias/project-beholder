@@ -12,7 +12,7 @@ import shutil
 import threading
 import zipfile
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from queue import Empty
 
@@ -82,7 +82,7 @@ class Packer:
     def _executar(self) -> None:
         """Consome filas.processada até SENTINEL e gera pacote."""
         assets: list[AssetProcessado] = []
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         staging = self._dir_output / f"staging_{timestamp}"
 
         try:
