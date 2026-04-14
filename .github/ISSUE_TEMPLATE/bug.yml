@@ -1,0 +1,41 @@
+name: "Bug Report"
+description: "Reportar um comportamento incorreto"
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: descricao
+    attributes:
+      label: "Descrição"
+      description: "O que aconteceu?"
+    validations:
+      required: true
+  - type: textarea
+    id: passos
+    attributes:
+      label: "Passos para reproduzir"
+      placeholder: "1. Abrir o Beholder\n2. Inserir URL X\n3. Clicar em INICIAR\n4. Ver erro"
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: "Comportamento esperado"
+    validations:
+      required: true
+  - type: dropdown
+    id: severidade
+    attributes:
+      label: "Severidade"
+      options:
+        - "P0 — Crítico (crash)"
+        - "P1 — Alto (feature quebrada)"
+        - "P2 — Médio"
+        - "P3 — Baixo"
+    validations:
+      required: true
+  - type: input
+    id: ambiente
+    attributes:
+      label: "Ambiente"
+      placeholder: "Ubuntu 24.04, Python 3.12, GTK 4.x"

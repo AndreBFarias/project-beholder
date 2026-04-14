@@ -1,0 +1,43 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-anonymity
+        name: "T1 — Anonimato (sem mencoes a IA)"
+        entry: bash hooks/pre-commit
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
+
+      - id: check-syntax-python
+        name: "T1 — Sintaxe Python"
+        entry: python -m py_compile
+        language: system
+        types: [python]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: ruff
+        name: "T2 — Ruff lint"
+        args: [--fix]
+      - id: ruff-format
+        name: "T3 — Ruff format"
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: "T3 — Trailing whitespace"
+      - id: end-of-file-fixer
+        name: "T3 — End of file"
+      - id: check-yaml
+        name: "T1 — YAML valido"
+      - id: check-json
+        name: "T1 — JSON valido"
+      - id: check-merge-conflict
+        name: "T1 — Merge conflicts"
+      - id: detect-private-key
+        name: "T1 — Private keys"
+      - id: check-added-large-files
+        name: "T1 — Arquivos grandes"
+        args: [--maxkb=500]

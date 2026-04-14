@@ -1,0 +1,35 @@
+name: "Task"
+description: "Tarefa técnica pontual"
+title: "[TASK] "
+labels: ["task"]
+body:
+  - type: textarea
+    id: descricao
+    attributes:
+      label: "Descrição"
+      description: "O que precisa ser feito?"
+    validations:
+      required: true
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: "Módulo"
+      options:
+        - "infra"
+        - "gui"
+        - "cacada"
+        - "cortex"
+        - "espolio"
+        - "protocolo"
+        - "grimorio"
+        - "core"
+        - "docs"
+    validations:
+      required: true
+  - type: textarea
+    id: criterio
+    attributes:
+      label: "Critério de conclusão"
+      placeholder: "Como saber que está pronto?"
+    validations:
+      required: true

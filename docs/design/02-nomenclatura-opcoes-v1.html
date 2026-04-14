@@ -1,0 +1,253 @@
+<h2>Nomenclatura da interface</h2>
+<p class="subtitle">Qual direção de nomes combina com o Beholder? Sidebar com 4 seções (inclui Batch/Checkpoints).</p>
+
+<style>
+  .beholder-side {
+    font-family: 'Segoe UI', sans-serif;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #44475a;
+    background: #282a36;
+    color: #f8f8f2;
+    font-size: 11px;
+    display: flex;
+    min-height: 230px;
+  }
+  .b-sidebar {
+    width: 170px;
+    background: #21222c;
+    border-right: 1px solid #44475a;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .b-logo-area {
+    text-align: center;
+    padding: 14px 0 10px;
+    border-bottom: 1px solid #44475a;
+  }
+  .b-logo-circle {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, #ff79c6, #bd93f9 60%, #282a36);
+    margin: 0 auto 6px;
+  }
+  .b-proj-name { color: #bd93f9; font-weight: 800; font-size: 12px; letter-spacing: 1px; }
+  .b-nav-item {
+    padding: 9px 14px;
+    color: #6272a4;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border-left: 2px solid transparent;
+  }
+  .b-nav-item.active {
+    color: #bd93f9;
+    background: #282a36;
+    border-left-color: #bd93f9;
+  }
+  .b-nav-icon { font-size: 13px; flex-shrink: 0; }
+  .b-nav-label { flex: 1; line-height: 1.2; }
+  .b-nav-sub { font-size: 9px; color: #6272a4; }
+  .b-main { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .b-url-row { display: flex; gap: 6px; }
+  .b-url-input {
+    flex: 1; background: #21222c; border: 1px solid #44475a;
+    border-radius: 5px; padding: 5px 8px; color: #f8f8f2; font-size: 10px;
+  }
+  .b-btn-main { background: #bd93f9; color: #282a36; border-radius: 5px; padding: 5px 10px; font-size: 10px; font-weight: 800; white-space: nowrap; }
+  .b-btn-stealth { background: #44475a; color: #8be9fd; border-radius: 5px; padding: 5px 8px; font-size: 10px; font-weight: 700; }
+  .b-terminal-mini {
+    background: #1e1f29; border-radius: 5px; padding: 6px 8px;
+    font-family: monospace; font-size: 9px; color: #50fa7b; flex: 1;
+    line-height: 1.5;
+  }
+  .b-section-label { font-size: 9px; color: #6272a4; text-transform: uppercase; letter-spacing: 1px; padding: 8px 14px 4px; }
+</style>
+
+<div class="cards">
+
+  <!-- Opção A: Temático / predatório -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-side">
+        <div class="b-sidebar">
+          <div class="b-logo-area">
+            <div class="b-logo-circle"></div>
+            <div class="b-proj-name">BEHOLDER</div>
+          </div>
+          <div class="b-section-label">Módulos</div>
+          <div class="b-nav-item active">
+            <div class="b-nav-icon">&#x1F3AF;</div>
+            <div class="b-nav-label">
+              Caçada
+              <div class="b-nav-sub">URL alvo + scraper</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x1F9E0;</div>
+            <div class="b-nav-label">
+              Córtex
+              <div class="b-nav-sub">IA + análise</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x1F5C2;</div>
+            <div class="b-nav-label">
+              Arsenal
+              <div class="b-nav-sub">exportar + .zip</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x26A1;</div>
+            <div class="b-nav-label">
+              Enxame
+              <div class="b-nav-sub">batch + checkpoints</div>
+            </div>
+          </div>
+        </div>
+        <div class="b-main">
+          <div class="b-url-row">
+            <div class="b-url-input">https://exemplo.com</div>
+            <div class="b-btn-main">INICIAR</div>
+            <div class="b-btn-stealth">FURTIVO</div>
+          </div>
+          <div class="b-terminal-mini">
+            &gt; iniciando caçada...<br>
+            &gt; 12 assets capturados<br>
+            &gt; análise em progresso
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Temático predatório</h3>
+      <p>Caçada · Córtex · Arsenal · Enxame. Botão "INICIAR". Nomes evocam o universo do projeto.</p>
+    </div>
+  </div>
+
+  <!-- Opção B: PT-BR funcional / descritivo -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-side">
+        <div class="b-sidebar">
+          <div class="b-logo-area">
+            <div class="b-logo-circle"></div>
+            <div class="b-proj-name">BEHOLDER</div>
+          </div>
+          <div class="b-section-label">Módulos</div>
+          <div class="b-nav-item active">
+            <div class="b-nav-icon">&#x1F50D;</div>
+            <div class="b-nav-label">
+              Rastreador
+              <div class="b-nav-sub">URL alvo + scraper</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x1F441;</div>
+            <div class="b-nav-label">
+              Análise IA
+              <div class="b-nav-sub">Moondream + VRAM</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x1F4E6;</div>
+            <div class="b-nav-label">
+              Exportação
+              <div class="b-nav-sub">pacote .zip + CSV</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x1F4CB;</div>
+            <div class="b-nav-label">
+              Fila de Missões
+              <div class="b-nav-sub">batch + checkpoints</div>
+            </div>
+          </div>
+        </div>
+        <div class="b-main">
+          <div class="b-url-row">
+            <div class="b-url-input">https://exemplo.com</div>
+            <div class="b-btn-main">EXECUTAR</div>
+            <div class="b-btn-stealth">FURTIVO</div>
+          </div>
+          <div class="b-terminal-mini">
+            &gt; rastreamento iniciado...<br>
+            &gt; 12 assets encontrados<br>
+            &gt; análise em progresso
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Funcional descritivo</h3>
+      <p>Rastreador · Análise IA · Exportação · Fila de Missões. Botão "EXECUTAR". Nomes claros e diretos.</p>
+    </div>
+  </div>
+
+  <!-- Opção C: Híbrido (inglês técnico + PT-BR) -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-side">
+        <div class="b-sidebar">
+          <div class="b-logo-area">
+            <div class="b-logo-circle"></div>
+            <div class="b-proj-name">BEHOLDER</div>
+          </div>
+          <div class="b-section-label">Módulos</div>
+          <div class="b-nav-item active">
+            <div class="b-nav-icon">&#x1F578;</div>
+            <div class="b-nav-label">
+              Hunting Ground
+              <div class="b-nav-sub">alvo + rastreamento</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x1F9EC;</div>
+            <div class="b-nav-label">
+              Vision Cortex
+              <div class="b-nav-sub">IA + classificação</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x2694;</div>
+            <div class="b-nav-label">
+              Export Forge
+              <div class="b-nav-sub">.zip + dataset CSV</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x1F300;</div>
+            <div class="b-nav-label">
+              Batch Missions
+              <div class="b-nav-sub">fila + checkpoints</div>
+            </div>
+          </div>
+        </div>
+        <div class="b-main">
+          <div class="b-url-row">
+            <div class="b-url-input">https://exemplo.com</div>
+            <div class="b-btn-main">ACTIVATE</div>
+            <div class="b-btn-stealth">STEALTH</div>
+          </div>
+          <div class="b-terminal-mini">
+            &gt; hunting initiated...<br>
+            &gt; 12 assets captured<br>
+            &gt; vision cortex loading
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Inglês técnico (originais)</h3>
+      <p>Mantém os nomes originais em inglês. Adiciona "Batch Missions". Botões em inglês.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:16px; background:#21222c; border-radius:8px; padding:14px; border:1px solid #44475a;">
+  <div class="label">Nota sobre emojis na UI real</div>
+  <p style="color:#6272a4; font-size:12px; margin-top:6px;">
+    Os ícones acima são só para o mockup. Na implementação GTK4 real usaremos ícones Adwaita/simbólicos — sem emojis no código.
+  </p>
+</div>

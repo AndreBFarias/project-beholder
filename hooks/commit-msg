@@ -1,0 +1,8 @@
+#!/bin/bash
+# Bloqueia Co-Authored-By de IAs na mensagem de commit
+MSG=$(cat "$1")
+if echo "$MSG" | grep -qi "Co-Authored-By.*\(anthropic\|claude\|openai\|chatgpt\|gemini\|copilot\)"; then
+    echo "ERRO: Co-Authored-By de IA detectado na mensagem de commit."
+    exit 1
+fi
+exit 0

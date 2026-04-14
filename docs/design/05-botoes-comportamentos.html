@@ -1,0 +1,271 @@
+<h2>Mapa de botões por seção</h2>
+<p class="subtitle">O que acontece ao clicar em cada elemento. Confirme ou ajuste antes de entrar no design.</p>
+
+<style>
+  :root {
+    --bg: #282a36; --sidebar: #21222c; --line: #44475a;
+    --fg: #f8f8f2; --comment: #6272a4; --purple: #bd93f9;
+    --pink: #ff79c6; --green: #50fa7b; --yellow: #f1fa8c;
+    --orange: #ffb86c; --cyan: #8be9fd; --red: #ff5555;
+  }
+
+  .section-card {
+    background: var(--sidebar); border: 1px solid var(--line);
+    border-radius: 10px; margin-bottom: 14px; overflow: hidden;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .section-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); }
+  .section-name { color: var(--purple); font-weight: 800; font-size: 13px; letter-spacing: 0.5px; }
+  .section-desc { color: var(--comment); font-size: 10px; margin-left: auto; }
+
+  .btn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; padding: 12px 16px; }
+  .btn-card {
+    background: var(--bg); border-radius: 7px; border: 1px solid var(--line);
+    padding: 10px 12px;
+  }
+  .btn-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .btn-chip {
+    display: inline-block; border-radius: 4px; padding: 3px 10px;
+    font-size: 10px; font-weight: 800; white-space: nowrap;
+  }
+  .chip-primary { background: var(--purple); color: var(--bg); }
+  .chip-secondary { background: var(--line); color: var(--cyan); }
+  .chip-danger { background: var(--red); color: var(--fg); }
+  .chip-warn { background: var(--orange); color: var(--bg); }
+  .chip-toggle { background: var(--line); color: var(--yellow); border: 1px dashed var(--yellow); }
+  .chip-toggle.on { background: var(--yellow); color: var(--bg); }
+  .chip-ghost { background: transparent; color: var(--comment); border: 1px solid var(--line); }
+
+  .btn-state { font-size: 9px; color: var(--comment); margin-bottom: 4px; }
+  .btn-state span { background: var(--line); border-radius: 3px; padding: 1px 5px; margin-right: 3px; }
+  .btn-action { color: var(--fg); font-size: 10px; line-height: 1.5; }
+  .btn-action strong { color: var(--cyan); }
+  .btn-action em { color: var(--green); font-style: normal; }
+
+  .status-preview {
+    display: flex; gap: 16px; padding: 8px 16px;
+    border-top: 1px solid var(--line); font-size: 9px;
+    color: var(--comment); background: var(--bg);
+    font-family: monospace;
+  }
+  .s-green { color: var(--green); }
+  .s-cyan { color: var(--cyan); }
+  .s-yellow { color: var(--yellow); }
+  .s-orange { color: var(--orange); }
+
+  .progress-bar-wrap { padding: 4px 16px 10px; }
+  .progress-label { font-size: 9px; color: var(--comment); margin-bottom: 4px; }
+  .progress-bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--purple); border-radius: 2px; width: 35%; }
+
+  .widget-row { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid var(--line); }
+  .widget-label { color: var(--comment); font-size: 10px; min-width: 80px; }
+  .mock-input {
+    flex: 1; background: var(--bg); border: 1px solid var(--line);
+    border-radius: 5px; padding: 5px 9px; color: var(--cyan);
+    font-size: 10px; font-family: monospace;
+  }
+</style>
+
+<!-- CAÇADA -->
+<div class="section-card">
+  <div class="section-header">
+    <div class="section-dot"></div>
+    <div class="section-name">Caçada</div>
+    <div class="section-desc">Módulo 1 — scraping + extração</div>
+  </div>
+
+  <div class="widget-row">
+    <div class="widget-label">URL Alvo</div>
+    <div class="mock-input">https://exemplo.com</div>
+    <div class="btn-chip chip-primary">INICIAR</div>
+    <div class="btn-chip chip-toggle">FURTIVO</div>
+  </div>
+
+  <div class="btn-grid">
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-primary">INICIAR</span></div>
+      <div class="btn-state"><span>idle</span><span>em progresso → vira PAUSAR</span></div>
+      <div class="btn-action">Valida URL → inicia thread do scraper → <strong>Playwright</strong> abre página → extrai todos os assets (img, svg, ico) → salva em <em>data/sessao_atual/</em> → posta progresso no log em tempo real.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-toggle on">FURTIVO</span></div>
+      <div class="btn-state"><span>off = requests simples</span><span>on = Playwright com evasão</span></div>
+      <div class="btn-action">Toggle persistido no Grimório. Quando ativo: <strong>fingerprint rotation</strong>, jitter de delays, bypass Cloudflare, simulação de mouse. Custo: +2-5s por request.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-warn">PAUSAR</span></div>
+      <div class="btn-state"><span>visível apenas durante scraping</span></div>
+      <div class="btn-action">Sinaliza thread para parar no próximo asset seguro → salva <strong>checkpoint</strong> em <em>data/sessao_atual/.checkpoint.json</em> → botão vira RETOMAR. Status: <em>"sessão pausada"</em>.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-danger">CANCELAR</span></div>
+      <div class="btn-state"><span>visível durante scraping ou pausado</span></div>
+      <div class="btn-action">Para thread imediatamente → <strong>não</strong> salva checkpoint → descarta sessão parcial → limpa data/sessao_atual/ → estado volta a idle.</div>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-label">Progresso: 12 baixados / 47 totais (25%)</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+
+  <div class="status-preview">
+    <span class="s-green"> ativo</span>
+    <span class="s-cyan">12 / 47 (25%)</span>
+    <span class="s-yellow">VRAM: 0 GB</span>
+    <span>sessão: nova</span>
+  </div>
+</div>
+
+<!-- CÓRTEX -->
+<div class="section-card">
+  <div class="section-header">
+    <div class="section-dot" style="background: var(--pink)"></div>
+    <div class="section-name" style="color:var(--pink)">Córtex</div>
+    <div class="section-desc">Módulo 2 — visão IA + classificação</div>
+  </div>
+
+  <div class="btn-grid">
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-primary">ANALISAR</span></div>
+      <div class="btn-state"><span>habilitado após Caçada ter assets</span></div>
+      <div class="btn-action">Sobe Ollama em porta isolada → carrega Moondream → processa cada imagem em <em>data/sessao_atual/</em> → salva tags + paleta em <strong>dataset_assets.csv</strong> → exibe grid imagem × JSON ao vivo.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-danger">EXPURGAR VRAM</span></div>
+      <div class="btn-state"><span>habilitado quando Ollama está ativo</span></div>
+      <div class="btn-action"><strong>pkill</strong> no PID exato do Ollama → limpa OLLAMA_TMPDIR → aguarda confirmação de processo encerrado → atualiza VRAM: 0 GB no status. Emergency kill switch.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-secondary">PAUSAR IA</span></div>
+      <div class="btn-state"><span>durante análise ativa</span></div>
+      <div class="btn-action">Pausa fila de processamento → <strong>mantém</strong> Ollama vivo (VRAM ocupada) → botão vira RETOMAR IA. Útil para inspecionar resultados intermediários sem matar o processo.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-ghost">K-MEANS</span></div>
+      <div class="btn-state"><span>configurável no Grimório</span></div>
+      <div class="btn-action">Parâmetro para quantização de cores (default: 4 cores dominantes). Botão de ação rápida para reprocessar paleta de um asset selecionado sem rodar IA completa.</div>
+    </div>
+  </div>
+
+  <div class="status-preview">
+    <span class="s-green"> ollama ativo</span>
+    <span class="s-cyan">8 / 12 analisados (66%)</span>
+    <span class="s-yellow">VRAM: 1.2 GB</span>
+    <span>moondream: v2.1</span>
+  </div>
+</div>
+
+<!-- ESPÓLIO -->
+<div class="section-card">
+  <div class="section-header">
+    <div class="section-dot" style="background: var(--green)"></div>
+    <div class="section-name" style="color:var(--green)">Espólio</div>
+    <div class="section-desc">Módulo 3 — exportação de pacote</div>
+  </div>
+
+  <div class="btn-grid">
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-primary">GERAR PACOTE</span></div>
+      <div class="btn-state"><span>habilitado após análise IA completa</span></div>
+      <div class="btn-action">Agrupa assets em subpastas por categoria (icons/, backgrounds/, etc.) → gera <strong>dataset_assets.csv</strong> final → compacta tudo em <em>output/beholder_YYYYMMDD_HHMMSS.zip</em> → exibe caminho e tamanho.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-secondary">ABRIR PASTA</span></div>
+      <div class="btn-state"><span>sempre habilitado se output/ existe</span></div>
+      <div class="btn-action">Abre o diretório <em>output/</em> no gerenciador de arquivos do sistema via <strong>xdg-open</strong>.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-ghost">EXPORTAR CSV</span></div>
+      <div class="btn-state"><span>separado do .zip</span></div>
+      <div class="btn-action">Exporta apenas o <strong>dataset_assets.csv</strong> para um caminho escolhido pelo usuário via diálogo de arquivo GTK.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-danger">LIMPAR SESSÃO</span></div>
+      <div class="btn-state"><span>com confirmação obrigatória</span></div>
+      <div class="btn-action">Remove <em>data/sessao_atual/</em> e o CSV intermediário → estado volta a zero. Diálogo de confirmação antes de executar.</div>
+    </div>
+  </div>
+
+  <div class="status-preview">
+    <span class="s-green"> 12 assets prontos</span>
+    <span class="s-cyan">icons: 7 · bg: 3 · outros: 2</span>
+    <span>output: ~4.2 MB</span>
+  </div>
+</div>
+
+<!-- PROTOCOLO -->
+<div class="section-card">
+  <div class="section-header">
+    <div class="section-dot" style="background: var(--orange)"></div>
+    <div class="section-name" style="color:var(--orange)">Protocolo</div>
+    <div class="section-desc">Módulo 4 — batch + checkpoints</div>
+  </div>
+
+  <div class="btn-grid">
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-primary">EXECUTAR LOTE</span></div>
+      <div class="btn-state"><span>habilitado com ≥ 1 URL na fila</span></div>
+      <div class="btn-action">Processa URLs da fila em sequência → para cada URL: Caçada → Córtex → Espólio → salva <strong>checkpoint</strong> após cada URL concluída → ao final gera um .zip unificado.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-secondary">ADICIONAR URL</span></div>
+      <div class="btn-state"><span>sempre habilitado</span></div>
+      <div class="btn-action">Campo de texto inline → valida URL → adiciona à fila com status <em>pendente</em>. Suporta colar lista de URLs (uma por linha) de uma vez.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-secondary">IMPORTAR LISTA</span></div>
+      <div class="btn-state"><span>abre diálogo de arquivo</span></div>
+      <div class="btn-action">Carrega arquivo .txt com uma URL por linha → valida cada entrada → adiciona todas à fila de uma vez. Duplicatas são ignoradas automaticamente.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-warn">RETOMAR SESSÃO</span></div>
+      <div class="btn-state"><span>visível quando checkpoint existe</span></div>
+      <div class="btn-action">Lê <em>.checkpoint.json</em> → restaura fila e posição → status: <em>"sessão restaurada — continuando de 3/8"</em> → retoma do próximo item pendente.</div>
+    </div>
+  </div>
+
+  <div class="status-preview">
+    <span class="s-orange"> lote ativo</span>
+    <span class="s-cyan">3 / 8 URLs (37%)</span>
+    <span class="s-green"> checkpoint salvo</span>
+    <span>próxima: site2.com</span>
+  </div>
+</div>
+
+<!-- GRIMÓRIO -->
+<div class="section-card">
+  <div class="section-header">
+    <div class="section-dot" style="background: var(--cyan)"></div>
+    <div class="section-name" style="color:var(--cyan)">Grimório</div>
+    <div class="section-desc">Módulo 5 — configurações do sistema</div>
+  </div>
+
+  <div class="btn-grid">
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-primary">SALVAR</span></div>
+      <div class="btn-state"><span>habilitado quando há mudanças não salvas</span></div>
+      <div class="btn-action">Persiste configurações em <em>~/.config/beholder/config.ini</em> via XDG standard (mesmo padrão do Conversor). Validação antes de salvar — campos inválidos destacados em vermelho.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-ghost">TESTAR OLLAMA</span></div>
+      <div class="btn-state"><span>verifica conexão com porta configurada</span></div>
+      <div class="btn-action">Faz ping na porta do Ollama → exibe latência e versão → confirma que Moondream está disponível. Feedback visual: verde (OK) / vermelho (falhou).</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-ghost">RESTAURAR PADRÕES</span></div>
+      <div class="btn-state"><span>com confirmação</span></div>
+      <div class="btn-action">Reseta config.ini para valores de <strong>defaults.py</strong> → recarrega todos os campos do Grimório. Confirmação obrigatória antes de executar.</div>
+    </div>
+    <div class="btn-card">
+      <div class="btn-row"><span class="btn-chip chip-secondary">ABRIR LOGS</span></div>
+      <div class="btn-state"><span>sempre habilitado</span></div>
+      <div class="btn-action">Abre <em>logs/beholder.log</em> no editor de texto padrão via xdg-open. Logs rotativos: 10 MB max, 3 backups.</div>
+    </div>
+  </div>
+</div>
