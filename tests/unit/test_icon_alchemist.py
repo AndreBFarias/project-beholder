@@ -15,7 +15,6 @@ from PIL import Image
 
 from src.transformer.icon_alchemist import criar_icone_circular, extrair_paleta
 
-
 # ------------------------------------------------------------------
 # Fixtures
 # ------------------------------------------------------------------
