@@ -15,7 +15,7 @@ from pathlib import Path
 
 from gi.repository import Adw, GdkPixbuf, Gtk
 
-from src.gui.pages.cacada import CacadaPage
+from src.gui.pages.busca import CacadaPage
 from src.gui.pages.cortex import CortexPage
 from src.gui.pages.espolio import EspolioPage
 from src.gui.pages.grimorio import GrimorioPage
