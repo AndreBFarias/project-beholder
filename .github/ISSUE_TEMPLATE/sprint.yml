@@ -1,0 +1,62 @@
+name: "Sprint"
+description: "Criar uma nova sprint de desenvolvimento"
+title: "Sprint XX: "
+labels: ["sprint"]
+body:
+  - type: input
+    id: id
+    attributes:
+      label: "ID da Sprint"
+      placeholder: "ex: 01"
+    validations:
+      required: true
+  - type: dropdown
+    id: prioridade
+    attributes:
+      label: "Prioridade"
+      options: ["CRÍTICA", "ALTA", "MÉDIA", "BAIXA"]
+    validations:
+      required: true
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: "Tipo"
+      options: ["feature", "bugfix", "infra", "refactor", "docs", "perf"]
+    validations:
+      required: true
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: "Módulo principal"
+      options:
+        - "infra"
+        - "gui"
+        - "cacada"
+        - "cortex"
+        - "espolio"
+        - "protocolo"
+        - "grimorio"
+        - "core"
+        - "docs"
+    validations:
+      required: true
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: "Objetivo"
+    validations:
+      required: true
+  - type: textarea
+    id: tarefas
+    attributes:
+      label: "Tarefas"
+      placeholder: "- [ ] Tarefa 1\n- [ ] Tarefa 2"
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: "Critérios de aceitação"
+      placeholder: "just ci-local passa\npython main.py abre sem erro\n..."
+    validations:
+      required: true

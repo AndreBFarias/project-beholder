@@ -1,0 +1,326 @@
+<h2>Nomenclatura da interface — 4 direções</h2>
+<p class="subtitle">Sidebar com 4 seções. Escolha a que mais combina com o Beholder.</p>
+
+<style>
+  .beholder-side {
+    font-family: 'Segoe UI', sans-serif;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #44475a;
+    background: #282a36;
+    color: #f8f8f2;
+    font-size: 11px;
+    display: flex;
+    min-height: 220px;
+  }
+  .b-sidebar {
+    width: 175px;
+    background: #21222c;
+    border-right: 1px solid #44475a;
+    flex-shrink: 0;
+  }
+  .b-logo-area {
+    text-align: center;
+    padding: 12px 0 9px;
+    border-bottom: 1px solid #44475a;
+  }
+  .b-logo-circle {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, #ff79c6, #bd93f9 60%, #282a36);
+    margin: 0 auto 5px;
+  }
+  .b-proj-name { color: #bd93f9; font-weight: 800; font-size: 11px; letter-spacing: 1.5px; }
+  .b-section-label { font-size: 9px; color: #6272a4; text-transform: uppercase; letter-spacing: 1px; padding: 7px 12px 3px; }
+  .b-nav-item {
+    padding: 8px 12px;
+    color: #6272a4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-left: 2px solid transparent;
+  }
+  .b-nav-item.active { color: #bd93f9; background: #282a36; border-left-color: #bd93f9; }
+  .b-nav-icon { font-size: 12px; flex-shrink: 0; width: 16px; text-align: center; }
+  .b-nav-label { flex: 1; line-height: 1.2; }
+  .b-nav-name { font-weight: 600; font-size: 11px; }
+  .b-nav-sub { font-size: 9px; color: #6272a4; margin-top: 1px; }
+  .b-main { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+  .b-url-row { display: flex; gap: 5px; }
+  .b-url-input {
+    flex: 1; background: #21222c; border: 1px solid #44475a;
+    border-radius: 5px; padding: 5px 7px; color: #8be9fd; font-size: 9px;
+    font-family: monospace;
+  }
+  .b-btn-main { background: #bd93f9; color: #282a36; border-radius: 5px; padding: 5px 9px; font-size: 9px; font-weight: 800; white-space: nowrap; }
+  .b-btn-2 { background: #44475a; color: #8be9fd; border-radius: 5px; padding: 5px 7px; font-size: 9px; font-weight: 700; white-space: nowrap; }
+  .b-terminal-mini {
+    background: #1e1f29; border-radius: 5px; padding: 6px 8px;
+    font-family: monospace; font-size: 9px; color: #50fa7b; flex: 1;
+    line-height: 1.6;
+  }
+  .b-status { font-size: 9px; color: #6272a4; display: flex; gap: 10px; margin-top: 2px; }
+  .b-status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #50fa7b; margin-right: 3px; }
+
+  /* Grid de 4 cards em 2x2 */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: #21222c; border: 2px solid #44475a; border-radius: 10px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
+  .card:hover { border-color: #6272a4; }
+  .card.selected { border-color: #bd93f9; background: #282a36; }
+  .card-image { padding: 12px; }
+  .card-body { padding: 10px 12px 12px; border-top: 1px solid #44475a; }
+  .card-body h3 { color: #f8f8f2; font-size: 12px; margin: 0 0 4px; }
+  .card-body p { color: #6272a4; font-size: 10px; margin: 0; line-height: 1.5; }
+  .tag { display: inline-block; background: #44475a; color: #bd93f9; border-radius: 3px; padding: 1px 6px; font-size: 9px; font-weight: 700; margin-right: 3px; margin-bottom: 3px; }
+</style>
+
+<div class="cards">
+
+  <!-- A: Temático predatório PT-BR -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-side">
+        <div class="b-sidebar">
+          <div class="b-logo-area">
+            <div class="b-logo-circle"></div>
+            <div class="b-proj-name">BEHOLDER</div>
+          </div>
+          <div class="b-section-label">Módulos</div>
+          <div class="b-nav-item active">
+            <div class="b-nav-icon">&#x25CE;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Caçada</div>
+              <div class="b-nav-sub">alvo + rastreamento</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x25C6;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Córtex</div>
+              <div class="b-nav-sub">IA + classificação</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x25A0;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Arsenal</div>
+              <div class="b-nav-sub">.zip + dataset CSV</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x2761;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Enxame</div>
+              <div class="b-nav-sub">batch + checkpoints</div>
+            </div>
+          </div>
+        </div>
+        <div class="b-main">
+          <div class="b-url-row">
+            <div class="b-url-input">https://exemplo.com</div>
+            <div class="b-btn-main">INICIAR</div>
+            <div class="b-btn-2">FURTIVO</div>
+          </div>
+          <div class="b-terminal-mini">
+            &gt; caçada iniciada...<br>
+            &gt; 12 presas capturadas
+          </div>
+          <div class="b-status"><span><span class="b-status-dot"></span>ativo</span><span>VRAM: 1.2 GB</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Temático predatório</h3>
+      <p>
+        <span class="tag">Caçada</span><span class="tag">Córtex</span><span class="tag">Arsenal</span><span class="tag">Enxame</span><br>
+        Botões: INICIAR · FURTIVO · EXPURGAR · COLHER
+      </p>
+    </div>
+  </div>
+
+  <!-- B: Funcional PT-BR -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-side">
+        <div class="b-sidebar">
+          <div class="b-logo-area">
+            <div class="b-logo-circle"></div>
+            <div class="b-proj-name">BEHOLDER</div>
+          </div>
+          <div class="b-section-label">Módulos</div>
+          <div class="b-nav-item active">
+            <div class="b-nav-icon">&#x25CE;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Rastreador</div>
+              <div class="b-nav-sub">alvo + scraper</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x25C6;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Análise IA</div>
+              <div class="b-nav-sub">Moondream + VRAM</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x25A0;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Exportação</div>
+              <div class="b-nav-sub">.zip + CSV</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x2761;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Fila de Missões</div>
+              <div class="b-nav-sub">batch + checkpoints</div>
+            </div>
+          </div>
+        </div>
+        <div class="b-main">
+          <div class="b-url-row">
+            <div class="b-url-input">https://exemplo.com</div>
+            <div class="b-btn-main">EXECUTAR</div>
+            <div class="b-btn-2">FURTIVO</div>
+          </div>
+          <div class="b-terminal-mini">
+            &gt; rastreamento iniciado...<br>
+            &gt; 12 assets encontrados
+          </div>
+          <div class="b-status"><span><span class="b-status-dot"></span>ativo</span><span>VRAM: 1.2 GB</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Funcional PT-BR</h3>
+      <p>
+        <span class="tag">Rastreador</span><span class="tag">Análise IA</span><span class="tag">Exportação</span><span class="tag">Fila de Missões</span><br>
+        Botões: EXECUTAR · FURTIVO · PARAR IA · EXPORTAR
+      </p>
+    </div>
+  </div>
+
+  <!-- C: Inglês técnico original -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-side">
+        <div class="b-sidebar">
+          <div class="b-logo-area">
+            <div class="b-logo-circle"></div>
+            <div class="b-proj-name">BEHOLDER</div>
+          </div>
+          <div class="b-section-label">Modules</div>
+          <div class="b-nav-item active">
+            <div class="b-nav-icon">&#x25CE;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Hunting Ground</div>
+              <div class="b-nav-sub">target + scraper</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x25C6;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Vision Cortex</div>
+              <div class="b-nav-sub">AI + classification</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x25A0;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Export Forge</div>
+              <div class="b-nav-sub">.zip + dataset CSV</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x2761;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Batch Missions</div>
+              <div class="b-nav-sub">queue + checkpoints</div>
+            </div>
+          </div>
+        </div>
+        <div class="b-main">
+          <div class="b-url-row">
+            <div class="b-url-input">https://example.com</div>
+            <div class="b-btn-main">ACTIVATE</div>
+            <div class="b-btn-2">STEALTH</div>
+          </div>
+          <div class="b-terminal-mini">
+            &gt; hunting initiated...<br>
+            &gt; 12 assets captured
+          </div>
+          <div class="b-status"><span><span class="b-status-dot"></span>active</span><span>VRAM: 1.2 GB</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Inglês técnico (originais)</h3>
+      <p>
+        <span class="tag">Hunting Ground</span><span class="tag">Vision Cortex</span><span class="tag">Export Forge</span><span class="tag">Batch Missions</span><br>
+        Botões: ACTIVATE · STEALTH · PURGE VRAM · FORGE
+      </p>
+    </div>
+  </div>
+
+  <!-- D: Ops / inteligência (PT-BR underground) -->
+  <div class="card" data-choice="d" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-side">
+        <div class="b-sidebar">
+          <div class="b-logo-area">
+            <div class="b-logo-circle"></div>
+            <div class="b-proj-name">BEHOLDER</div>
+          </div>
+          <div class="b-section-label">Operações</div>
+          <div class="b-nav-item active">
+            <div class="b-nav-icon">&#x25CE;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Alvo</div>
+              <div class="b-nav-sub">infiltração + coleta</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x25C6;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Retina</div>
+              <div class="b-nav-sub">visão IA + tags</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x25A0;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Exfiltração</div>
+              <div class="b-nav-sub">.zip + dataset</div>
+            </div>
+          </div>
+          <div class="b-nav-item">
+            <div class="b-nav-icon">&#x2761;</div>
+            <div class="b-nav-label">
+              <div class="b-nav-name">Operações</div>
+              <div class="b-nav-sub">batch + checkpoints</div>
+            </div>
+          </div>
+        </div>
+        <div class="b-main">
+          <div class="b-url-row">
+            <div class="b-url-input">https://exemplo.com</div>
+            <div class="b-btn-main">INFILTRAR</div>
+            <div class="b-btn-2">FURTIVO</div>
+          </div>
+          <div class="b-terminal-mini">
+            &gt; infiltração em curso...<br>
+            &gt; 12 alvos capturados
+          </div>
+          <div class="b-status"><span><span class="b-status-dot"></span>ativo</span><span>VRAM: 1.2 GB</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>D — Ops / inteligência</h3>
+      <p>
+        <span class="tag">Alvo</span><span class="tag">Retina</span><span class="tag">Exfiltração</span><span class="tag">Operações</span><br>
+        Botões: INFILTRAR · FURTIVO · EXPURGAR VRAM · EXFILTRAR
+      </p>
+    </div>
+  </div>
+
+</div>

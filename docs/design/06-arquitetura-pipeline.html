@@ -1,0 +1,303 @@
+<h2>Arquitetura do Beholder</h2>
+<p class="subtitle">Pipeline produtor-consumidor com três threads. Confirme antes de entrar no design detalhado.</p>
+
+<style>
+  :root {
+    --bg: #282a36; --sidebar: #21222c; --line: #44475a;
+    --fg: #f8f8f2; --comment: #6272a4;
+    --purple: #bd93f9; --pink: #ff79c6; --green: #50fa7b;
+    --yellow: #f1fa8c; --orange: #ffb86c; --cyan: #8be9fd; --red: #ff5555;
+  }
+
+  .arch-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+  /* Pipeline principal */
+  .pipeline {
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: 10px; padding: 16px; position: relative;
+  }
+  .pipeline-title { color: var(--comment); font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; }
+  .pipe-flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+  .pipe-node {
+    background: var(--sidebar); border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 14px; min-width: 120px;
+    position: relative;
+  }
+  .pipe-node-title { font-weight: 800; font-size: 12px; margin-bottom: 4px; }
+  .pipe-node-sub { font-size: 9px; color: var(--comment); line-height: 1.5; }
+  .pipe-node-tag {
+    display: inline-block; border-radius: 3px; padding: 1px 6px;
+    font-size: 8px; font-weight: 800; margin-top: 5px;
+  }
+  .tag-thread { background: #3a2a5e; color: var(--purple); }
+  .tag-queue { background: #1e3a2a; color: var(--green); }
+  .tag-main { background: #2a1e3e; color: var(--pink); }
+
+  .pipe-arrow {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 0 6px; color: var(--line); font-size: 16px; gap: 2px;
+  }
+  .pipe-arrow-label { font-size: 8px; color: var(--comment); white-space: nowrap; }
+
+  .queue-node {
+    background: var(--bg); border: 2px dashed var(--green);
+    border-radius: 8px; padding: 8px 12px; min-width: 100px; text-align: center;
+  }
+  .queue-title { color: var(--green); font-weight: 800; font-size: 11px; }
+  .queue-sub { color: var(--comment); font-size: 9px; margin-top: 2px; }
+
+  /* UI layer */
+  .ui-layer {
+    background: var(--bg); border: 1px solid var(--purple);
+    border-radius: 10px; padding: 12px 16px;
+    border-style: dashed;
+  }
+  .ui-layer-title { color: var(--purple); font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+  .ui-modules { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ui-module {
+    background: var(--sidebar); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 10px; font-size: 10px; font-weight: 700;
+  }
+
+  .idle-add-label {
+    text-align: center; font-size: 9px; color: var(--purple);
+    padding: 6px 0; letter-spacing: 0.5px;
+  }
+
+  /* Infra layer */
+  .infra-layer {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  }
+  .infra-box {
+    background: var(--sidebar); border: 1px solid var(--line);
+    border-radius: 7px; padding: 8px 10px;
+  }
+  .infra-title { color: var(--cyan); font-size: 10px; font-weight: 800; margin-bottom: 3px; }
+  .infra-file { color: var(--comment); font-size: 9px; font-family: monospace; line-height: 1.6; }
+
+  /* File system */
+  .fs-layer {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .fs-box {
+    background: var(--bg); border: 1px solid var(--line);
+    border-radius: 7px; padding: 8px 10px;
+  }
+  .fs-title { color: var(--yellow); font-size: 10px; font-weight: 800; margin-bottom: 5px; font-family: monospace; }
+  .fs-item { color: var(--comment); font-size: 9px; font-family: monospace; line-height: 1.7; }
+  .fs-item span { color: var(--fg); }
+
+  .section-label {
+    font-size: 9px; color: var(--comment); text-transform: uppercase;
+    letter-spacing: 1.5px; margin-bottom: 8px; margin-top: 4px;
+  }
+
+  /* Ollama lifecycle */
+  .ollama-flow { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .ollama-step {
+    background: var(--sidebar); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 10px; font-size: 9px; text-align: center;
+  }
+  .ollama-step span { display: block; font-weight: 800; font-size: 10px; margin-bottom: 2px; }
+  .o-up span { color: var(--green); }
+  .o-work span { color: var(--purple); }
+  .o-kill span { color: var(--red); }
+  .o-arrow { color: var(--line); font-size: 14px; }
+
+  /* Checkpoint flow */
+  .cp-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .cp-box { background: var(--sidebar); border: 1px solid var(--orange); border-radius: 6px; padding: 6px 10px; font-size: 9px; }
+  .cp-box span { color: var(--orange); font-weight: 800; display: block; }
+</style>
+
+<div class="arch-wrap">
+
+  <!-- 1. UI Layer -->
+  <div class="section-label">Camada de interface</div>
+  <div class="ui-layer">
+    <div class="ui-layer-title">GTK4 + Libadwaita — Thread principal (main loop)</div>
+    <div class="ui-modules">
+      <div class="ui-module" style="color:var(--purple)">Caçada</div>
+      <div class="ui-module" style="color:var(--pink)">Córtex</div>
+      <div class="ui-module" style="color:var(--green)">Espólio</div>
+      <div class="ui-module" style="color:var(--orange)">Protocolo</div>
+      <div class="ui-module" style="color:var(--cyan)">Grimório</div>
+      <div class="ui-module" style="color:var(--comment)">status bar global</div>
+    </div>
+  </div>
+
+  <div class="idle-add-label">
+     GLib.idle_add() — único canal UI  threads (thread nunca toca widget diretamente)
+  </div>
+
+  <!-- 2. Pipeline -->
+  <div class="section-label">Pipeline produtor-consumidor</div>
+  <div class="pipeline">
+    <div class="pipe-flow">
+
+      <div class="pipe-node">
+        <div class="pipe-node-title" style="color:var(--purple)">Scraper</div>
+        <div class="pipe-node-sub">
+          stealth_spider.py<br>
+          html_parser.py<br>
+          Playwright + evasão
+        </div>
+        <div class="pipe-node-tag tag-thread">Thread A — produtor</div>
+      </div>
+
+      <div class="pipe-arrow">
+        <div>→</div>
+        <div class="pipe-arrow-label">asset baixado</div>
+      </div>
+
+      <div class="queue-node">
+        <div class="queue-title">Fila A</div>
+        <div class="queue-sub">threading.Queue<br>assets brutos</div>
+      </div>
+
+      <div class="pipe-arrow">
+        <div>→</div>
+        <div class="pipe-arrow-label">consome</div>
+      </div>
+
+      <div class="pipe-node">
+        <div class="pipe-node-title" style="color:var(--pink)">AI Worker</div>
+        <div class="pipe-node-sub">
+          orchestrator.py<br>
+          moondream_prompt.py<br>
+          icon_alchemist.py
+        </div>
+        <div class="pipe-node-tag tag-thread">Thread B — consumidor/produtor</div>
+      </div>
+
+      <div class="pipe-arrow">
+        <div>→</div>
+        <div class="pipe-arrow-label">asset processado</div>
+      </div>
+
+      <div class="queue-node">
+        <div class="queue-title">Fila B</div>
+        <div class="queue-sub">threading.Queue<br>assets + tags</div>
+      </div>
+
+      <div class="pipe-arrow">
+        <div>→</div>
+        <div class="pipe-arrow-label">consome</div>
+      </div>
+
+      <div class="pipe-node">
+        <div class="pipe-node-title" style="color:var(--green)">Exporter</div>
+        <div class="pipe-node-sub">
+          packer.py<br>
+          dataset_writer.py<br>
+          .zip + CSV
+        </div>
+        <div class="pipe-node-tag tag-thread">Thread C — consumidor</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 3. Ciclo Ollama -->
+  <div class="section-label">Ciclo de vida do Ollama (efêmero)</div>
+  <div class="pipeline">
+    <div class="ollama-flow">
+      <div class="ollama-step o-up"><span>SUBIR</span>run_beholder.sh<br>./bin/ollama<br>porta 11435</div>
+      <div class="o-arrow">→</div>
+      <div class="ollama-step o-work"><span>TRABALHAR</span>Thread B consome<br>análise por imagem<br>VRAM monitorada</div>
+      <div class="o-arrow">→</div>
+      <div class="ollama-step o-kill"><span>EXPURGAR</span>pkill PID exato<br>limpa TMPDIR<br>VRAM = 0</div>
+      <div class="o-arrow">→</div>
+      <div class="ollama-step" style="border-color:var(--comment)"><span style="color:var(--comment)">INATIVO</span>processo morto<br>recursos livres<br>aguarda próxima</div>
+    </div>
+  </div>
+
+  <!-- 4. Checkpoints -->
+  <div class="section-label">Sistema de checkpoints</div>
+  <div class="pipeline">
+    <div class="cp-row">
+      <div class="cp-box"><span>PAUSAR</span>serializa estado das filas<br>posição atual na fila de URLs<br>→ .checkpoint.json</div>
+      <div style="color:var(--line); font-size:18px">→</div>
+      <div class="cp-box"><span>PERSISTÊNCIA</span>data/sessao_atual/<br>.checkpoint.json<br>assets já baixados preservados</div>
+      <div style="color:var(--line); font-size:18px">→</div>
+      <div class="cp-box"><span>RETOMAR</span>lê .checkpoint.json<br>reconstrói filas<br>continua do ponto exato</div>
+    </div>
+  </div>
+
+  <!-- 5. Infra -->
+  <div class="section-label">Camada de infraestrutura</div>
+  <div class="infra-layer">
+    <div class="infra-box">
+      <div class="infra-title">Config</div>
+      <div class="infra-file">
+        config.py<br>
+        defaults.py<br>
+        ~/.config/beholder/<br>
+        config.ini (XDG)
+      </div>
+    </div>
+    <div class="infra-box">
+      <div class="infra-title">Logger</div>
+      <div class="infra-file">
+        logging_config.py<br>
+        logs/beholder.log<br>
+        10 MB rotating<br>
+        3 backups
+      </div>
+    </div>
+    <div class="infra-box">
+      <div class="infra-title">Ollama</div>
+      <div class="infra-file">
+        ollama_lifecycle.py<br>
+        ./bin/ollama<br>
+        porta 11435<br>
+        PID tracking
+      </div>
+    </div>
+    <div class="infra-box">
+      <div class="infra-title">Checkpoint</div>
+      <div class="infra-file">
+        checkpoint.py<br>
+        .checkpoint.json<br>
+        por sessão<br>
+        por lote (Protocolo)
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. File system -->
+  <div class="section-label">Estrutura de diretórios em tempo de execução</div>
+  <div class="fs-layer">
+    <div class="fs-box">
+      <div class="fs-title">data/</div>
+      <div class="fs-item">
+        sessao_atual/<br>
+        &nbsp;&nbsp;<span>raw/</span> assets brutos<br>
+        &nbsp;&nbsp;<span>processed/</span> pós-IA<br>
+        &nbsp;&nbsp;<span>.checkpoint.json</span><br>
+        sessoes_anteriores/
+      </div>
+    </div>
+    <div class="fs-box">
+      <div class="fs-title">output/</div>
+      <div class="fs-item">
+        <span>beholder_20260413_143022.zip</span><br>
+        &nbsp;&nbsp;icons/<br>
+        &nbsp;&nbsp;backgrounds/<br>
+        &nbsp;&nbsp;outros/<br>
+        &nbsp;&nbsp;<span>dataset_assets.csv</span>
+      </div>
+    </div>
+    <div class="fs-box">
+      <div class="fs-title">logs/</div>
+      <div class="fs-item">
+        <span>beholder.log</span><br>
+        beholder.log.1<br>
+        beholder.log.2<br>
+        beholder.log.3<br>
+        (10 MB × 3 backups)
+      </div>
+    </div>
+  </div>
+
+</div>

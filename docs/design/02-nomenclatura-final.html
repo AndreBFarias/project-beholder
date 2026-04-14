@@ -1,0 +1,190 @@
+<h2>Duas decisões de nome abertas</h2>
+<p class="subtitle">O resto já está confirmado: Caçada · Córtex · Configurações. Falta resolver os dois abaixo.</p>
+
+<style>
+  .b-sidebar-preview {
+    font-family: 'Segoe UI', sans-serif;
+    background: #21222c;
+    border-radius: 10px;
+    border: 1px solid #44475a;
+    overflow: hidden;
+    color: #f8f8f2;
+    font-size: 11px;
+    width: 100%;
+  }
+  .b-logo-area {
+    text-align: center;
+    padding: 12px 0 9px;
+    border-bottom: 1px solid #44475a;
+  }
+  .b-logo-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, #ff79c6, #bd93f9 60%, #282a36);
+    margin: 0 auto 5px;
+  }
+  .b-proj-name { color: #bd93f9; font-weight: 800; font-size: 11px; letter-spacing: 1.5px; }
+  .b-section-label { font-size: 9px; color: #6272a4; text-transform: uppercase; letter-spacing: 1px; padding: 7px 12px 3px; }
+  .b-nav-item {
+    padding: 8px 12px 8px 14px;
+    color: #6272a4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-left: 2px solid transparent;
+  }
+  .b-nav-item.active  { color: #bd93f9; background: #282a36; border-left-color: #bd93f9; }
+  .b-nav-item.locked  { color: #50fa7b; }
+  .b-nav-item.pending { color: #ffb86c; border-left-color: #ffb86c; background: #2a2a1e; }
+  .b-nav-icon { font-size: 12px; flex-shrink: 0; width: 16px; text-align: center; }
+  .b-nav-label { flex: 1; line-height: 1.2; }
+  .b-nav-name { font-weight: 600; font-size: 11px; }
+  .b-nav-sub  { font-size: 9px; margin-top: 1px; }
+  .locked-sub { color: #50fa7b; }
+  .pending-sub { color: #f1fa8c; }
+  .b-badge { font-size: 8px; background: #ffb86c; color: #282a36; border-radius: 3px; padding: 1px 5px; font-weight: 800; }
+  .b-spacer { border-top: 1px solid #44475a; margin: 4px 0; }
+  .b-nav-item.settings { color: #6272a4; }
+
+  .decision-block {
+    background: #282a36;
+    border: 1px solid #44475a;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
+  }
+  .decision-title { color: #f8f8f2; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .decision-sub { color: #6272a4; font-size: 11px; margin-bottom: 12px; }
+  .opts { display: flex; gap: 10px; flex-wrap: wrap; }
+  .opt {
+    background: #21222c; border: 2px solid #44475a; border-radius: 8px;
+    padding: 10px 16px; cursor: pointer; transition: border-color 0.15s; flex: 1; min-width: 110px;
+  }
+  .opt:hover { border-color: #6272a4; }
+  .opt.selected { border-color: #bd93f9; background: #2a2237; }
+  .opt-name { color: #bd93f9; font-weight: 800; font-size: 14px; margin-bottom: 3px; }
+  .opt-desc { color: #6272a4; font-size: 10px; line-height: 1.4; }
+  .opt-note { color: #ffb86c; font-size: 9px; margin-top: 4px; }
+</style>
+
+<div style="display: flex; gap: 20px; align-items: flex-start;">
+
+  <!-- Sidebar preview com os nomes já confirmados -->
+  <div style="width: 200px; flex-shrink: 0;">
+    <div class="b-sidebar-preview">
+      <div class="b-logo-area">
+        <div class="b-logo-circle"></div>
+        <div class="b-proj-name">BEHOLDER</div>
+      </div>
+      <div class="b-section-label">Módulos</div>
+
+      <div class="b-nav-item locked">
+        <div class="b-nav-icon">&#x25CE;</div>
+        <div class="b-nav-label">
+          <div class="b-nav-name">Caçada</div>
+          <div class="b-nav-sub locked-sub">confirmado</div>
+        </div>
+      </div>
+
+      <div class="b-nav-item locked">
+        <div class="b-nav-icon">&#x25C6;</div>
+        <div class="b-nav-label">
+          <div class="b-nav-name">Córtex</div>
+          <div class="b-nav-sub locked-sub">confirmado</div>
+        </div>
+      </div>
+
+      <div class="b-nav-item pending">
+        <div class="b-nav-icon">&#x25A0;</div>
+        <div class="b-nav-label">
+          <div class="b-nav-name">Loot / Espólio</div>
+          <div class="b-nav-sub pending-sub">&#x2460; decidir abaixo</div>
+        </div>
+      </div>
+
+      <div class="b-nav-item pending">
+        <div class="b-nav-icon">&#x2761;</div>
+        <div class="b-nav-label">
+          <div class="b-nav-name">???</div>
+          <div class="b-nav-sub pending-sub">&#x2461; decidir abaixo</div>
+        </div>
+      </div>
+
+      <div class="b-spacer"></div>
+
+      <div class="b-nav-item settings">
+        <div class="b-nav-icon">&#x2699;</div>
+        <div class="b-nav-label">
+          <div class="b-nav-name">Configurações</div>
+          <div class="b-nav-sub locked-sub">confirmado</div>
+        </div>
+      </div>
+    </div>
+    <p style="color:#6272a4; font-size:10px; margin-top:8px; text-align:center;">Verde = confirmado<br>Laranja = decidir</p>
+  </div>
+
+  <!-- As duas decisões -->
+  <div style="flex: 1;">
+
+    <!-- Decisão 1: seção de exportação -->
+    <div class="decision-block">
+      <div class="decision-title">&#x2460; Seção de exportação (.zip + CSV)</div>
+      <div class="decision-sub">Onde ficam os assets processados e o botão de gerar pacote.</div>
+      <div class="opts" id="opts-export">
+        <div class="opt" data-choice="loot" onclick="pick(this,'opts-export')">
+          <div class="opt-name">Loot</div>
+          <div class="opt-desc">Inglês, direto. Gamer/underground. Bom par com "Caçada" — você caça e coleta loot.</div>
+          <div class="opt-note">combina com o tom predatório</div>
+        </div>
+        <div class="opt" data-choice="espolio" onclick="pick(this,'opts-export')">
+          <div class="opt-name">Espólio</div>
+          <div class="opt-desc">PT-BR, significa os bens tomados após uma conquista. Mais sombrio e sofisticado.</div>
+          <div class="opt-note">mais coerente com PT-BR total</div>
+        </div>
+        <div class="opt" data-choice="colheita" onclick="pick(this,'opts-export')">
+          <div class="opt-name">Colheita</div>
+          <div class="opt-desc">O resultado final da caçada. Mais neutro, mas ainda temático.</div>
+          <div class="opt-note">alternativa se nenhuma servir</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decisão 2: seção de batch/checkpoints -->
+    <div class="decision-block" style="margin-top: 12px;">
+      <div class="decision-title">&#x2461; Seção de batch + checkpoints</div>
+      <div class="decision-sub">Fila de URLs, progresso salvo, retomada de sessão interrompida.</div>
+      <div class="opts" id="opts-batch">
+        <div class="opt" data-choice="canonico" onclick="pick(this,'opts-batch')">
+          <div class="opt-name">Cânone</div>
+          <div class="opt-desc">Sua sugestão. Já é o nome de uma feature central no Luna. Soa autoritário e permanente.</div>
+          <div class="opt-note">referência direta ao Luna</div>
+        </div>
+        <div class="opt" data-choice="campanhas" onclick="pick(this,'opts-batch')">
+          <div class="opt-name">Campanhas</div>
+          <div class="opt-desc">Série de missões organizadas com progresso rastreado. Lembra estratégia militar e RPG.</div>
+          <div class="opt-note">intuitivo para "batch"</div>
+        </div>
+        <div class="opt" data-choice="protocolo" onclick="pick(this,'opts-batch')">
+          <div class="opt-name">Protocolo</div>
+          <div class="opt-desc">Sequência definida de operações. Tom técnico/ops, coerente com o universo de vigilância.</div>
+          <div class="opt-note">mais técnico/sério</div>
+        </div>
+        <div class="opt" data-choice="vigilia" onclick="pick(this,'opts-batch')">
+          <div class="opt-name">Vigília</div>
+          <div class="opt-desc">Monitoramento contínuo e persistente. Referência direta ao conceito do Beholder como observador.</div>
+          <div class="opt-note">mais poético/temático</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function pick(el, groupId) {
+  document.querySelectorAll('#' + groupId + ' .opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const choice = el.dataset.choice;
+  const event = { type: 'click', choice: groupId + ':' + choice, text: el.querySelector('.opt-name').textContent, timestamp: Date.now()/1000|0 };
+  if (window.recordEvent) window.recordEvent(event);
+}
+</script>

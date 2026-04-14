@@ -1,0 +1,192 @@
+<h2>Estrutura da janela principal</h2>
+<p class="subtitle">Como logo, título e abas se organizam? Dracula theme em todas as opções.</p>
+
+<style>
+  .beholder-mock {
+    font-family: 'Segoe UI', sans-serif;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #44475a;
+    background: #282a36;
+    color: #f8f8f2;
+    font-size: 12px;
+    min-height: 200px;
+  }
+  .b-titlebar {
+    background: #1e1f29;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #44475a;
+  }
+  .b-logo {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, #ff79c6, #bd93f9 60%, #282a36);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+  }
+  .b-title { color: #bd93f9; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; }
+  .b-subtitle { color: #6272a4; font-size: 10px; }
+  .b-tabs {
+    display: flex;
+    background: #21222c;
+    border-bottom: 1px solid #44475a;
+    padding: 0 8px;
+  }
+  .b-tab {
+    padding: 7px 14px;
+    color: #6272a4;
+    cursor: pointer;
+    font-size: 11px;
+    border-bottom: 2px solid transparent;
+  }
+  .b-tab.active { color: #bd93f9; border-bottom-color: #bd93f9; }
+  .b-content { padding: 14px; }
+  .b-url-bar {
+    display: flex; gap: 8px; align-items: center;
+    background: #21222c; border: 1px solid #44475a;
+    border-radius: 6px; padding: 6px 10px;
+    margin-bottom: 10px;
+  }
+  .b-url-input { flex: 1; color: #f8f8f2; font-size: 11px; background: none; border: none; }
+  .b-btn { background: #bd93f9; color: #282a36; border: none; border-radius: 4px; padding: 4px 10px; font-size: 10px; font-weight: 700; cursor: pointer; }
+  .b-terminal { background: #1e1f29; border-radius: 6px; padding: 8px 10px; height: 70px; font-family: monospace; font-size: 10px; color: #50fa7b; overflow: hidden; }
+  .b-sidebar {
+    width: 160px; background: #21222c;
+    border-right: 1px solid #44475a;
+    padding: 10px 0;
+  }
+  .b-nav-item {
+    padding: 8px 14px; color: #6272a4; font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .b-nav-item.active { color: #bd93f9; background: #282a36; border-left: 2px solid #bd93f9; }
+  .b-nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .b-main-area { flex: 1; padding: 14px; }
+  .b-logo-big {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, #ff79c6, #bd93f9 60%, #282a36);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; margin: 0 auto 6px;
+  }
+  .b-centered-header {
+    text-align: center; padding: 16px 14px 0;
+    border-bottom: 1px solid #44475a;
+    background: #1e1f29;
+  }
+  .b-inline-tabs {
+    display: flex; justify-content: center; gap: 4px;
+    padding: 8px 0 0;
+  }
+  .b-pill { padding: 5px 14px; border-radius: 20px; font-size: 11px; color: #6272a4; }
+  .b-pill.active { background: #bd93f9; color: #282a36; font-weight: 700; }
+</style>
+
+<div class="cards">
+
+  <!-- Opção A: Header compacto, abas abaixo -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-mock">
+        <div class="b-titlebar">
+          <div class="b-logo"></div>
+          <div>
+            <div class="b-title">PROJECT BEHOLDER</div>
+            <div class="b-subtitle">motor de predação visual</div>
+          </div>
+        </div>
+        <div class="b-tabs">
+          <div class="b-tab active">Hunting Ground</div>
+          <div class="b-tab">Vision Cortex</div>
+          <div class="b-tab">Export Forge</div>
+        </div>
+        <div class="b-content">
+          <div class="b-url-bar">
+            <div class="b-url-input">https://example.com</div>
+            <div class="b-btn">CACAR</div>
+          </div>
+          <div class="b-terminal">
+            &gt; iniciando scraper...<br>
+            &gt; 12 assets encontrados<br>
+            &gt; carregando Moondream...
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Header + Abas horizontais</h3>
+      <p>Logo e título no topo, abas na linha abaixo. Padrão Libadwaita moderno. Visual limpo e familiar.</p>
+    </div>
+  </div>
+
+  <!-- Opção B: Sidebar de navegação -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-mock" style="display:flex; min-height:210px;">
+        <div class="b-sidebar">
+          <div style="text-align:center; padding: 12px 0 10px;">
+            <div class="b-logo-big"></div>
+            <div class="b-title" style="font-size:11px;">BEHOLDER</div>
+          </div>
+          <div style="border-top:1px solid #44475a; margin-bottom:6px;"></div>
+          <div class="b-nav-item active"><div class="b-nav-dot"></div> Hunting Ground</div>
+          <div class="b-nav-item"><div class="b-nav-dot"></div> Vision Cortex</div>
+          <div class="b-nav-item"><div class="b-nav-dot"></div> Export Forge</div>
+        </div>
+        <div class="b-main-area">
+          <div class="b-url-bar">
+            <div class="b-url-input">https://example.com</div>
+            <div class="b-btn">CACAR</div>
+          </div>
+          <div class="b-terminal">
+            &gt; iniciando scraper...<br>
+            &gt; 12 assets encontrados<br>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Sidebar de navegação</h3>
+      <p>Logo centralizada na sidebar esquerda, navegação vertical. Mais área para conteúdo. Estilo painel de controle.</p>
+    </div>
+  </div>
+
+  <!-- Opção C: Header centralizado com pills -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="beholder-mock">
+        <div class="b-centered-header">
+          <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+            <div class="b-logo" style="width:36px;height:36px;"></div>
+            <div>
+              <div class="b-title" style="font-size:15px;">PROJECT BEHOLDER</div>
+              <div class="b-subtitle">motor de predação visual</div>
+            </div>
+          </div>
+          <div class="b-inline-tabs">
+            <div class="b-pill active">Hunting Ground</div>
+            <div class="b-pill">Vision Cortex</div>
+            <div class="b-pill">Export Forge</div>
+          </div>
+        </div>
+        <div class="b-content">
+          <div class="b-url-bar">
+            <div class="b-url-input">https://example.com</div>
+            <div class="b-btn">CACAR</div>
+          </div>
+          <div class="b-terminal">
+            &gt; iniciando scraper...<br>
+            &gt; 12 assets encontrados<br>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Header centralizado + pills</h3>
+      <p>Logo e título centralizados em destaque, abas como pills arredondadas. Mais dramático e estilizado.</p>
+    </div>
+  </div>
+
+</div>

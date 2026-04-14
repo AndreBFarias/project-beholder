@@ -1,0 +1,103 @@
+<h2>Nome da seção de Configurações</h2>
+<p class="subtitle">Todos os outros já estão confirmados — só falta essa. Termos do universo D&D.</p>
+
+<style>
+  .b-sidebar-final {
+    font-family: 'Segoe UI', sans-serif;
+    background: #21222c;
+    border-radius: 10px;
+    border: 1px solid #44475a;
+    overflow: hidden;
+    color: #f8f8f2;
+    font-size: 11px;
+    width: 190px;
+    flex-shrink: 0;
+  }
+  .b-logo-area { text-align: center; padding: 12px 0 9px; border-bottom: 1px solid #44475a; }
+  .b-logo-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: radial-gradient(circle at 60% 40%, #ff79c6, #bd93f9 60%, #282a36);
+    margin: 0 auto 5px;
+  }
+  .b-proj-name { color: #bd93f9; font-weight: 800; font-size: 11px; letter-spacing: 1.5px; }
+  .b-section-label { font-size: 9px; color: #6272a4; text-transform: uppercase; letter-spacing: 1px; padding: 7px 12px 3px; }
+  .b-nav-item { padding: 8px 12px 8px 14px; display: flex; align-items: center; gap: 8px; border-left: 2px solid transparent; }
+  .b-nav-item.active { color: #bd93f9; background: #282a36; border-left-color: #bd93f9; }
+  .b-nav-item.dim { color: #6272a4; }
+  .b-nav-name { font-weight: 600; font-size: 11px; }
+  .b-nav-sub { font-size: 9px; color: #6272a4; margin-top: 1px; }
+  .b-spacer { border-top: 1px solid #44475a; margin: 4px 0; }
+  .b-nav-highlight { color: #ffb86c; background: #2a2a1e; border-left-color: #ffb86c; border-left-width: 2px; border-left-style: solid; }
+
+  .dnd-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 1; }
+  .dnd-opt {
+    background: #21222c; border: 2px solid #44475a; border-radius: 8px;
+    padding: 12px 14px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .dnd-opt:hover { border-color: #6272a4; }
+  .dnd-opt.selected { border-color: #bd93f9; background: #2a2237; }
+  .dnd-name { color: #bd93f9; font-weight: 800; font-size: 16px; margin-bottom: 5px; font-family: Georgia, serif; }
+  .dnd-desc { color: #f8f8f2; font-size: 11px; margin-bottom: 5px; font-weight: 600; }
+  .dnd-why { color: #6272a4; font-size: 10px; line-height: 1.4; }
+  .dnd-tag { display: inline-block; background: #44475a; color: #8be9fd; border-radius: 3px; padding: 1px 5px; font-size: 9px; margin-top: 5px; }
+</style>
+
+<div style="display: flex; gap: 20px; align-items: flex-start;">
+
+  <!-- Sidebar com nomes confirmados + destaque no slot de settings -->
+  <div>
+    <div class="b-sidebar-final">
+      <div class="b-logo-area">
+        <div class="b-logo-circle"></div>
+        <div class="b-proj-name">BEHOLDER</div>
+      </div>
+      <div class="b-section-label">Módulos</div>
+      <div class="b-nav-item dim"><div style="width:16px">&#x25CE;</div><div><div class="b-nav-name">Caçada</div></div></div>
+      <div class="b-nav-item dim"><div style="width:16px">&#x25C6;</div><div><div class="b-nav-name">Córtex</div></div></div>
+      <div class="b-nav-item dim"><div style="width:16px">&#x25A0;</div><div><div class="b-nav-name">Espólio</div></div></div>
+      <div class="b-nav-item dim"><div style="width:16px">&#x2761;</div><div><div class="b-nav-name">Protocolo</div></div></div>
+      <div class="b-spacer"></div>
+      <div class="b-nav-item b-nav-highlight">
+        <div style="width:16px">&#x2699;</div>
+        <div>
+          <div class="b-nav-name" style="color:#ffb86c;">???</div>
+          <div class="b-nav-sub" style="color:#f1fa8c;">escolher abaixo</div>
+        </div>
+      </div>
+    </div>
+    <p style="color:#6272a4; font-size:10px; text-align:center; margin-top:6px;">cinza = confirmado</p>
+  </div>
+
+  <!-- Opções D&D -->
+  <div class="dnd-opts">
+
+    <div class="dnd-opt" data-choice="grimorio" onclick="toggleSelect(this)">
+      <div class="dnd-name">Grimório</div>
+      <div class="dnd-desc">O livro de magias</div>
+      <div class="dnd-why">Em D&D, o grimório é onde o mago registra todas as suas regras e feitiços. Configurações como "regras do sistema". Muito evocativo.</div>
+      <div class="dnd-tag">mago / arcano</div>
+    </div>
+
+    <div class="dnd-opt" data-choice="covil" onclick="toggleSelect(this)">
+      <div class="dnd-name">Covil</div>
+      <div class="dnd-desc">O lair do Beholder</div>
+      <div class="dnd-why">Todo Beholder tem um covil elaborado que ele controla e customiza. Settings como o covil da criatura — onde ela define suas regras.</div>
+      <div class="dnd-tag">direto ao lore do Beholder</div>
+    </div>
+
+    <div class="dnd-opt" data-choice="santuario" onclick="toggleSelect(this)">
+      <div class="dnd-name">Santuário</div>
+      <div class="dnd-desc">Espaço sagrado e protegido</div>
+      <div class="dnd-why">Lugar de poder onde o personagem define suas leis. Menos monstruoso, mais místico. Soa bem em PT-BR com acento.</div>
+      <div class="dnd-tag">místico / neutro</div>
+    </div>
+
+    <div class="dnd-opt" data-choice="pergaminho" onclick="toggleSelect(this)">
+      <div class="dnd-name">Pergaminho</div>
+      <div class="dnd-desc">O documento das regras</div>
+      <div class="dnd-why">Pergaminhos em D&D contêm instruções e configurações para magias. Configurações como um pergaminho que define o comportamento do sistema.</div>
+      <div class="dnd-tag">clássico D&D</div>
+    </div>
+
+  </div>
+</div>

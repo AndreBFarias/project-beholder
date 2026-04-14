@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+node_modules/
+venv/
+.venv/
+logs/
+*.log
+.env
+*.key
+*.pem
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+bin/
+models/
+data/
+output/
+.superpowers/
+dataset_assets.csv
+
+# Rascunhos de planejamento pré-projeto
+Estrutura de Pastas Beholder
+Layout UX Beholder
+Prompt

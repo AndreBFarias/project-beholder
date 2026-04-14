@@ -1,0 +1,47 @@
+#!/bin/bash
+# Pre-commit hooks do Project Beholder
+
+# Protocolo 1: Anti-emoji
+if git diff --cached --name-only | xargs grep -l $'[\U0001F600-\U0001F9FF]' 2>/dev/null; then
+    echo "ERRO: Emojis detectados no código. Remova-os antes do commit."
+    exit 1
+fi
+
+# Protocolo 2: Anonimato (bloqueia menções a IAs em código e docs)
+PATTERNS="[Cc]laude\|[Gg][Pp][Tt]\|[Gg]emini\|[Cc]opilot\|[Aa]nthropic\|[Oo]pen[Aa][Ii]"
+if git diff --cached -- '*.py' '*.md' | grep "^+" | grep -v "^+++" | grep -q "$PATTERNS"; then
+    echo "ERRO: Menção a IA detectada. Remova antes do commit."
+    exit 1
+fi
+
+# Protocolo 3: Validação de sintaxe Python
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep "\.py$"); do
+    if [ -f "$file" ]; then
+        python -m py_compile "$file" 2>/dev/null || {
+            echo "ERRO: Sintaxe Python inválida em $file"
+            exit 1
+        }
+    fi
+done
+
+# Protocolo 4: Anti-burla (sem TODO/FIXME inline, sem except vazio)
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep "\.py$"); do
+    if git diff --cached "$file" | grep "^+" | grep -v "^+++" | grep -q "# TODO\|# FIXME\|# HACK"; then
+        echo "ERRO: TODO/FIXME/HACK detectado em $file. Crie uma issue no GitHub."
+        exit 1
+    fi
+    if git diff --cached "$file" | grep "^+" | grep -v "^+++" | grep -qP "^\s*except:\s*$|^\s*except Exception:\s*$"; then
+        echo "AVISO: except sem handler específico em $file. Considere tratar a exceção."
+    fi
+done
+
+# Protocolo 5: Acentuação PT-BR em variáveis e comentários Python
+PALAVRAS_SEM_ACENTO="funcao\|configuracao\|execucao\|validacao\|comunicacao\|autenticacao\|autorizacao\|operacao\|producao\|documentacao"
+for file in $(git diff --cached --name-only --diff-filter=ACM | grep "\.py$"); do
+    if git diff --cached "$file" | grep "^+" | grep -v "^+++" | grep -q "$PALAVRAS_SEM_ACENTO"; then
+        echo "AVISO: Palavra sem acento detectada em $file. Use acentuação PT-BR correta."
+    fi
+done
+
+echo "Pre-commit OK"
+exit 0
