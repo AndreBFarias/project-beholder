@@ -1,7 +1,7 @@
 # Sprint 11 — UI: Espólio Redesign + Textos + Status Bar
 
 **Issue:** #6
-**Status:** Backlog
+**Status:** Completa
 **Prioridade:** Alta
 
 ---
@@ -50,4 +50,4 @@ Sprint 10 entregou ajustes pontuais. Ainda restam problemas visuais visíveis:
 - Espólio mostra 5 cards horizontais com número grande + label pequeno
 - Nenhum label de Gtk.Frame em minúsculo nas 5 abas
 - Status bar com fonte maior e texto capitalizado
-- 66+ testes passando
+- 97 testes passando
