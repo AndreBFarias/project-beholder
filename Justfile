@@ -1,9 +1,10 @@
 # Project Beholder — Task runner
 
+install:
+    bash install.sh
+
 setup:
-    pip install -r requirements.txt
-    playwright install chromium
-    pre-commit install
+    bash install.sh
 
 ci-local:
     #!/usr/bin/env bash
@@ -24,7 +25,13 @@ ci-quick:
     pytest tests/smoke/ --timeout=10 -q
 
 run:
-    python main.py
+    bash run.sh
+
+uninstall:
+    bash uninstall.sh
+
+teardown:
+    bash teardown.sh
 
 doctor:
     #!/usr/bin/env bash
