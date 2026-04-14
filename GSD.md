@@ -116,31 +116,31 @@ fila_scraper.put(None)  # Thread B para quando recebe None
 | 10 | COMPLETA | Polish visual das 5 abas |
 | 11 | BACKLOG | UI: Espólio redesign + textos + status bar (#6) |
 | 12 | BACKLOG | Instalação: .desktop + moondream + venv fix (#7) |
-| 13 | BACKLOG | Correções retroativas da auditoria (#8) |
+| 13 | COMPLETA | Correções retroativas da auditoria (#8) |
 | 14 | BACKLOG | Packaging: deb + flatpak + appimage (#9) |
 | 15 | BACKLOG | Workflow CI/CD + pre-commit screenshots (#10) |
 
-## Bugs Conhecidos (Auditoria Sprints 0–10)
+## Bugs Conhecidos
 
-### Críticos
+### Pendentes
 
 | ID | Arquivo | Problema |
 |----|---------|---------|
 | BUG-01 | `install.sh:88` | venv sem `--system-site-packages` — GTK4 pode não funcionar (Sprint 12) |
-| BUG-02 | `asset_queue.py:44` | Filas singleton causam deadlock entre sessões (Sprint 13) |
-| BUG-03 | `orchestrator.py:~111` | `get()` sem timeout — cancelamento não encerra a thread (Sprint 13) |
-| BUG-04 | `protocolo.py:~327` | Timeout não marca URL como erro (Sprint 13) |
-| BUG-05 | `cortex.py + espolio.py` | `registrar_asset()` nunca chamado — Espólio sempre vazio (Sprint 13) |
 
-### Importantes
+### Resolvidos (Sprint 13)
 
-| ID | Arquivo | Problema |
-|----|---------|---------|
-| BUG-06 | `cortex.py:~64` | `set_ellipsize(3)` — magic number |
-| BUG-07 | `logging_config.py:13` | `Path("logs")` relativo ao CWD |
-| BUG-08 | `ollama_lifecycle.py:~125` | `Path.cwd()` para localizar binário |
-| BUG-09 | `grimorio.py:~215` | HTTP síncrono na thread GTK |
-| BUG-11 | `stealth_spider.py:~255` | `hash()` instável para nomes de arquivo |
+| ID | Correção |
+|----|----------|
+| BUG-02 | FilasPipeline com nova_sessao() substitui singletons |
+| BUG-03 | get(timeout=1.0) + loop com verificação de evento |
+| BUG-04 | wait() retorna bool, timeout marca como erro |
+| BUG-05 | CortexPage.conectar_espolio() via main_window.py |
+| BUG-06 | Pango.EllipsizeMode.END substitui magic number |
+| BUG-07 | Path(__file__) em logging_config e checkpoint |
+| BUG-08 | Path(__file__) em ollama_lifecycle |
+| BUG-09 | httpx em thread separada com GLib.idle_add |
+| BUG-11 | hashlib.md5 substitui hash() instável |
 
 ## Distribuição
 
