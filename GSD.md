@@ -117,6 +117,8 @@ fila_scraper.put(None)  # Thread B para quando recebe None
 | 11 | COMPLETA | UI: Espólio redesign + textos + status bar (#6) |
 | 12 | COMPLETA | Instalação: .desktop + moondream + venv fix (#7) |
 | 13 | COMPLETA | Correções retroativas da auditoria (#8) |
+| 13.1 | COMPLETA | Hardening: exceções, caminhos absolutos, Packer timeout |
+| 13.2 | COMPLETA | Dracula spec compliance + StatusBar ativa |
 | 14 | BACKLOG | Packaging: deb + flatpak + appimage (#9) |
 | 15 | BACKLOG | Workflow CI/CD + pre-commit screenshots (#10) |
 
@@ -145,6 +147,38 @@ Nenhum bug pendente.
 | BUG-08 | Path(__file__) em ollama_lifecycle |
 | BUG-09 | httpx em thread separada com GLib.idle_add |
 | BUG-11 | hashlib.md5 substitui hash() instável |
+
+### Resolvidos (Sprint 13.1 — Auditoria Profunda)
+
+| ID | Correção |
+|----|----------|
+| AUD-01 | Packer: get(timeout=1.0) + evento de parada (padrão BUG-03) |
+| AUD-03 | CortexPage._espolio inicializado no __init__, removido hasattr |
+| AUD-04 | espolio.py: _DIR_OUTPUT e _DIR_DATA com Path(__file__) |
+| AUD-05 | packer.py: _dir_output com Path(__file__) |
+| AUD-06 | grimorio.py: logs_dir com Path(__file__) |
+| AUD-07 | main_window.py: icon_path com Path(__file__) |
+| AUD-08 | sidebar.py: LOGO_PATH com Path(__file__) |
+| AUD-09 | stealth_spider.py: diretorio_saida com Path(__file__) |
+| AUD-10 | ollama_lifecycle.py: ping() agora loga exceções |
+| AUD-11 | sidebar.py: logo loading agora loga exceções |
+| AUD-12 | main_window.py: icon setup agora loga exceções |
+| AUD-13 | cortex.py: CSS provider agora loga exceções |
+| AUD-14 | protocolo.py: TreePath update agora loga exceções |
+| AUD-15 | espolio.py: queue drain agora loga exceções |
+| AUD-16 | espolio.py: xdg-open com start_new_session=True |
+| AUD-17 | grimorio.py: xdg-open com start_new_session=True |
+
+### Resolvidos (Sprint 13.2 — Dracula Spec + StatusBar)
+
+| ID | Correção |
+|----|----------|
+| AUD-02 | StatusBar conectada a Busca, Córtex, Protocolo e Espólio via conectar_status_bar() |
+| AUD-18 | Terminal/status-bar bg: #1e1f29 substituído por AnsiBlack #21222c (spec Dracula) |
+| AUD-19 | Hover primary: #caa4ff substituído por AnsiBrightBlue #d6acff (spec Dracula) |
+| AUD-20 | Hover danger: #ff7777 substituído por AnsiBrightRed #ff6e6e (spec Dracula) |
+| AUD-21 | Hover secondary: #555770 substituído por DRACULA_COMMENT #6272a4 |
+| AUD-22 | DRACULA_YELLOW: adicionado .status-dot-aviso no CSS + constantes ANSI Bright completas |
 
 ## Distribuição
 

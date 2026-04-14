@@ -21,12 +21,13 @@ from src.core.asset_queue import AssetProcessado, filas
 from src.core.config.defaults import DEFAULTS
 from src.exporter.dataset_writer import escrever_csv
 from src.exporter.packer import Packer
-from src.gui.widgets import LogTerminal
+from src.gui.widgets import LogTerminal, StatusBar
 
 logger = logging.getLogger("beholder.gui.espolio")
 
-_DIR_OUTPUT = Path(DEFAULTS["Saida"]["diretorio_output"])
-_DIR_DATA = Path(DEFAULTS["Saida"]["diretorio_data"])
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_DIR_OUTPUT = _PROJECT_ROOT / DEFAULTS["Saida"]["diretorio_output"]
+_DIR_DATA = _PROJECT_ROOT / DEFAULTS["Saida"]["diretorio_data"]
 
 
 class EspolioPage(Gtk.Box):
@@ -44,7 +45,12 @@ class EspolioPage(Gtk.Box):
             on_log=self._cb_log,
             on_concluido=self._cb_pacote_concluido,
         )
+        self._status_bar: StatusBar | None = None
         self._build_ui()
+
+    def conectar_status_bar(self, status_bar: StatusBar) -> None:
+        """Conecta a barra de status global para atualizações em tempo real."""
+        self._status_bar = status_bar
 
     def _build_ui(self) -> None:
         # Título
@@ -185,13 +191,16 @@ class EspolioPage(Gtk.Box):
             return
         self._btn_gerar.set_sensitive(False)
         self._cb_log("[INFO] Iniciando empacotamento...")
+        if self._status_bar:
+            self._status_bar.update(status="ativa", sessao="exportando")
 
         if self._assets:
             # Drena resíduos de sessões anteriores da fila processada
             while not filas.processada.empty():
                 try:
                     filas.processada.get_nowait()
-                except Exception:
+                except Exception as exc:
+                    logger.debug("Erro ao drenar fila residual: %s", exc)
                     break
             for asset in self._assets:
                 filas.processada.put(asset)
@@ -205,7 +214,7 @@ class EspolioPage(Gtk.Box):
         """Abre o diretório output/ com xdg-open."""
         _DIR_OUTPUT.mkdir(parents=True, exist_ok=True)
         try:
-            subprocess.Popen(["xdg-open", str(_DIR_OUTPUT)])
+            subprocess.Popen(["xdg-open", str(_DIR_OUTPUT)], start_new_session=True)
         except OSError as exc:
             logger.error("Falha ao abrir pasta: %s", exc)
             self._cb_log(f"[ERRO] Não foi possível abrir a pasta: {exc}")
@@ -285,6 +294,8 @@ class EspolioPage(Gtk.Box):
     def _cb_pacote_concluido(self, caminho_zip: str) -> None:
         """Packer encerrou — atualiza histórico e reativa botão."""
         self._btn_gerar.set_sensitive(True)
+        if self._status_bar:
+            self._status_bar.update(status="concluída", sessao="exportação")
         if caminho_zip:
             self._ultimo_zip = caminho_zip
             self._adicionar_historico(caminho_zip)

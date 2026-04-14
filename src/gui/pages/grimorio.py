@@ -26,6 +26,8 @@ from src.core.config.defaults import DEFAULTS
 
 logger = logging.getLogger("beholder.gui.grimorio")
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 
 def _criar_linha_config(label_texto: str, valor_padrao: str) -> tuple[Gtk.Box, Gtk.Entry]:
     """Cria uma linha label + entry para configuração."""
@@ -253,10 +255,10 @@ class GrimorioPage(Gtk.Box):
 
     def _on_abrir_logs(self, _btn: Gtk.Button) -> None:
         """Abre a pasta logs/ com xdg-open."""
-        logs_dir = Path("logs")
+        logs_dir = _PROJECT_ROOT / "logs"
         logs_dir.mkdir(parents=True, exist_ok=True)
         try:
-            subprocess.Popen(["xdg-open", str(logs_dir)])
+            subprocess.Popen(["xdg-open", str(logs_dir)], start_new_session=True)
         except OSError as exc:
             logger.error("Falha ao abrir logs: %s", exc)
             self._label_status.set_label(f"[ERRO] {exc}")
