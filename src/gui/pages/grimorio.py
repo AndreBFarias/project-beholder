@@ -45,12 +45,12 @@ class GrimorioPage(Gtk.Box):
 
     def _build_ui(self) -> None:
         # Título
-        titulo = Gtk.Label(label="GRIMORIO")
+        titulo = Gtk.Label(label="Grimório")
         titulo.add_css_class("page-title")
         titulo.set_xalign(0)
         self.append(titulo)
 
-        subtitulo = Gtk.Label(label="CONFIGURACOES")
+        subtitulo = Gtk.Label(label="Configurações")
         subtitulo.add_css_class("section-title")
         subtitulo.set_xalign(0)
         self.append(subtitulo)
@@ -67,7 +67,7 @@ class GrimorioPage(Gtk.Box):
         conteudo.set_margin_bottom(8)
 
         # Seção Scraper
-        scraper_frame = Gtk.Frame(label="SCRAPER")
+        scraper_frame = Gtk.Frame(label="Scraper")
         scraper_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         scraper_box.set_margin_top(8)
         scraper_box.set_margin_bottom(8)
@@ -87,7 +87,7 @@ class GrimorioPage(Gtk.Box):
         conteudo.append(scraper_frame)
 
         # Seção IA
-        ia_frame = Gtk.Frame(label="INTELIGENCIA ARTIFICIAL")
+        ia_frame = Gtk.Frame(label="Inteligência Artificial")
         ia_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         ia_box.set_margin_top(8)
         ia_box.set_margin_bottom(8)
@@ -105,7 +105,7 @@ class GrimorioPage(Gtk.Box):
         conteudo.append(ia_frame)
 
         # Seção Saída
-        saida_frame = Gtk.Frame(label="SAIDA")
+        saida_frame = Gtk.Frame(label="Saída")
         saida_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         saida_box.set_margin_top(8)
         saida_box.set_margin_bottom(8)
@@ -124,7 +124,7 @@ class GrimorioPage(Gtk.Box):
         self.append(scroll)
 
         # Ações
-        acoes_frame = Gtk.Frame(label="ACOES")
+        acoes_frame = Gtk.Frame(label="Ações")
         acoes_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         acoes_box.set_margin_top(8)
         acoes_box.set_margin_bottom(8)
@@ -137,7 +137,7 @@ class GrimorioPage(Gtk.Box):
         self._btn_testar = Gtk.Button(label="TESTAR OLLAMA")
         self._btn_testar.add_css_class("btn-secondary")
 
-        self._btn_restaurar = Gtk.Button(label="RESTAURAR PADROES")
+        self._btn_restaurar = Gtk.Button(label="RESTAURAR PADRÕES")
         self._btn_restaurar.add_css_class("btn-warning")
 
         self._btn_logs = Gtk.Button(label="ABRIR LOGS")

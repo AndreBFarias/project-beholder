@@ -23,17 +23,17 @@ from src.gui.theme import (
 logger = logging.getLogger("beholder.gui.sidebar")
 
 LOGO_PATH = Path("beholder-icon.png")
-LOGO_SIZE = 40
+LOGO_SIZE = 80
 
 # Definição dos itens da sidebar: (id, nome, descrição, cor, ícone adwaita)
 ITENS_SIDEBAR = [
-    ("cacada", "Cacada", "extração de assets", DRACULA_PURPLE, "system-search-symbolic"),
-    ("cortex", "Cortex", "visão IA local", DRACULA_PINK, "preferences-system-symbolic"),
-    ("espolio", "Espolio", "exportação .zip + CSV", DRACULA_GREEN, "folder-download-symbolic"),
-    ("protocolo", "Protocolo", "execução em lote", DRACULA_ORANGE, "view-list-symbolic"),
+    ("cacada", "Busca", "Extração de Assets", DRACULA_PURPLE, "system-search-symbolic"),
+    ("cortex", "Córtex", "Visão IA Local", DRACULA_PINK, "preferences-system-symbolic"),
+    ("espolio", "Espólio", "Exportação .zip + CSV", DRACULA_GREEN, "folder-download-symbolic"),
+    ("protocolo", "Protocolo", "Execução em Lote", DRACULA_ORANGE, "view-list-symbolic"),
 ]
 
-ITEM_GRIMORIO = ("grimorio", "Grimorio", "configurações", DRACULA_CYAN, "accessories-text-editor-symbolic")
+ITEM_GRIMORIO = ("grimorio", "Grimório", "Configurações", DRACULA_CYAN, "accessories-text-editor-symbolic")
 
 
 def _criar_item_sidebar(
@@ -54,18 +54,20 @@ def _criar_item_sidebar(
 
     # Ícone Adwaita symbolic
     icone = Gtk.Image.new_from_icon_name(icone_name)
-    icone.set_pixel_size(16)
+    icone.set_pixel_size(18)
     caixa.append(icone)
 
     # Textos
-    textos = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
-    lbl_nome = Gtk.Label(label=nome.upper())
+    textos = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+    lbl_nome = Gtk.Label(label=nome)
     lbl_nome.set_xalign(0)
-    lbl_nome.set_markup(f'<span foreground="{cor}" weight="bold" size="small">{nome.upper()}</span>')
+    lbl_nome.add_css_class("sidebar-module-name")
+    lbl_nome.set_markup(f'<span foreground="{cor}" weight="bold">{nome}</span>')
 
     lbl_desc = Gtk.Label(label=descricao)
     lbl_desc.set_xalign(0)
-    lbl_desc.set_markup(f'<span foreground="{DRACULA_COMMENT}" size="x-small">{descricao}</span>')
+    lbl_desc.add_css_class("sidebar-module-desc")
+    lbl_desc.set_markup(f'<span foreground="{DRACULA_COMMENT}">{descricao}</span>')
 
     textos.append(lbl_nome)
     textos.append(lbl_desc)
@@ -85,7 +87,7 @@ class Sidebar(Gtk.Box):
     def __init__(self, on_modulo_selecionado: Callable[[str], None]) -> None:
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.add_css_class("sidebar")
-        self.set_size_request(200, -1)
+        self.set_size_request(240, -1)
         self._callback = on_modulo_selecionado
         self._ids: list[str] = []
         self._build_ui()
@@ -95,14 +97,11 @@ class Sidebar(Gtk.Box):
         self._build_lista()
 
     def _build_header(self) -> None:
-        """Cria o header com logo, título e tagline."""
-        header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        """Cria o header com logo centralizada, título e tagline abaixo."""
+        header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         header.add_css_class("sidebar-header")
 
-        # Logo circular
-        logo_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        logo_box.set_margin_top(4)
-
+        # Logo centralizada
         if LOGO_PATH.exists():
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(LOGO_PATH), LOGO_SIZE, LOGO_SIZE, True)
@@ -114,24 +113,27 @@ class Sidebar(Gtk.Box):
             logo_img = Gtk.Image.new_from_icon_name("application-x-executable")
 
         logo_img.set_pixel_size(LOGO_SIZE)
+        logo_img.set_halign(Gtk.Align.CENTER)
+        logo_img.set_margin_top(10)
 
-        textos_header = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        # Título BEHOLDER abaixo da logo
         lbl_titulo = Gtk.Label()
         lbl_titulo.set_markup(
-            f'<span foreground="{DRACULA_PURPLE}" weight="bold" size="small" letter_spacing="2048">BEHOLDER</span>'
+            f'<span foreground="{DRACULA_PURPLE}" weight="bold" letter_spacing="2048">Beholder</span>'
         )
-        lbl_titulo.set_xalign(0)
+        lbl_titulo.add_css_class("project-title")
+        lbl_titulo.set_halign(Gtk.Align.CENTER)
 
+        # Tagline abaixo do título
         lbl_tagline = Gtk.Label()
-        lbl_tagline.set_markup(f'<span foreground="{DRACULA_COMMENT}" size="x-small">motor de predação visual</span>')
-        lbl_tagline.set_xalign(0)
+        lbl_tagline.set_markup(f'<span foreground="{DRACULA_COMMENT}">Motor de predação visual</span>')
+        lbl_tagline.add_css_class("project-tagline")
+        lbl_tagline.set_halign(Gtk.Align.CENTER)
+        lbl_tagline.set_margin_bottom(4)
 
-        textos_header.append(lbl_titulo)
-        textos_header.append(lbl_tagline)
-
-        logo_box.append(logo_img)
-        logo_box.append(textos_header)
-        header.append(logo_box)
+        header.append(logo_img)
+        header.append(lbl_titulo)
+        header.append(lbl_tagline)
 
         self.append(header)
 

@@ -1,1 +1,59 @@
-Project Beholder1. O Manifesto da CriaturaO Project Beholder é um motor autônomo de predação visual. Seu objetivo é varrer a web, capturar assets de interface (ícones, vetores, fundos) e transmutá-los por meio da visão computacional (Moondream/Ollama). Ele não possui alinhamento estético predefinido; ele adapta sua extração às cores dominantes encontradas ou quantiza imagens conforme solicitado. Seu destino é gerar arquivos .csv e .zip perfeitamente estruturados para que outros repositórios os consumam.2. Pilares de IdentidadeScraping Evasivo: O Beholder utiliza bypasses de detecção (como contornar o Cloudflare) para extrair dados sem ser bloqueado.Inteligência Isolada: A IA (Ollama) não parasita o sistema hospedeiro; é invocada temporariamente para processar imagens e é forçosamente terminada, liberando a VRAM logo após.Análise Agnóstica: Ele descreve, tagueia (ex: "app_icon", "background") e extrai a paleta primária da imagem capturada, salvando tudo estruturadamente.
+# Project Beholder
+
+Motor autônomo de predação visual para Linux.
+
+## O que é
+
+O Beholder varre a web, captura assets de interface (ícones, vetores, fundos) e os
+transmuta via visão computacional (Moondream/Ollama). Gera arquivos `.csv` e `.zip`
+estruturados para consumo por outros repositórios.
+
+## Pilares
+
+- **Scraping Evasivo** — bypasses de detecção, modo furtivo via Playwright, delays e
+  jitter configuráveis
+- **Inteligência Isolada** — Ollama invocado em `./bin/ollama` na porta 11435,
+  terminado pelo PID exato após uso; nunca parasita o sistema hospedeiro
+- **Análise Agnóstica** — describe, tagueia e extrai paleta primária (K-Means) de cada
+  asset capturado
+
+## Módulos
+
+| Módulo | Função |
+|--------|--------|
+| Busca | Extração de assets por URL |
+| Córtex | Visão IA local (Moondream) |
+| Espólio | Exportação `.zip` + CSV |
+| Protocolo | Execução em lote com checkpoint |
+| Grimório | Configurações persistidas |
+
+## Requisitos
+
+- Linux (Ubuntu 22.04+)
+- Python 3.11+
+- GTK 4 + Libadwaita
+- Ollama (`./bin/ollama`) com modelo `moondream`
+
+## Instalação
+
+```bash
+./install.sh
+```
+
+## Execução
+
+```bash
+./run.sh
+```
+
+## Desenvolvimento
+
+```bash
+just ci-local   # lint + testes
+just test       # apenas testes
+just lint       # apenas lint
+```
+
+## Licença
+
+MIT

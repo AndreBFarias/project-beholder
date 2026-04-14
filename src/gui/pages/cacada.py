@@ -30,12 +30,12 @@ class CacadaPage(Gtk.Box):
 
     def _build_ui(self) -> None:
         # Título da página
-        titulo = Gtk.Label(label="CACADA")
+        titulo = Gtk.Label(label="Busca")
         titulo.add_css_class("page-title")
         titulo.set_xalign(0)
         self.append(titulo)
 
-        subtitulo = Gtk.Label(label="EXTRAÇÃO DE ASSETS")
+        subtitulo = Gtk.Label(label="Extração de Assets")
         subtitulo.add_css_class("section-title")
         subtitulo.set_xalign(0)
         self.append(subtitulo)
@@ -43,7 +43,7 @@ class CacadaPage(Gtk.Box):
         self.append(Gtk.Separator())
 
         # URL + controles de execução
-        url_frame = Gtk.Frame(label="ALVO")
+        url_frame = Gtk.Frame(label="Alvo")
         url_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         url_box.set_margin_top(8)
         url_box.set_margin_bottom(8)
@@ -96,7 +96,7 @@ class CacadaPage(Gtk.Box):
         self.append(url_frame)
 
         # Barra de progresso
-        prog_frame = Gtk.Frame(label="PROGRESSO")
+        prog_frame = Gtk.Frame(label="Progresso")
         prog_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
         prog_box.set_margin_top(8)
         prog_box.set_margin_bottom(8)
@@ -113,7 +113,7 @@ class CacadaPage(Gtk.Box):
         self.append(prog_frame)
 
         # Terminal de log
-        log_frame = Gtk.Frame(label="LOG")
+        log_frame = Gtk.Frame(label="Log")
         self._log_terminal = LogTerminal()
         log_frame.set_child(self._log_terminal)
         self.append(log_frame)

@@ -28,12 +28,12 @@ class CortexPage(Gtk.Box):
 
     def _build_ui(self) -> None:
         # Título
-        titulo = Gtk.Label(label="CORTEX")
+        titulo = Gtk.Label(label="Córtex")
         titulo.add_css_class("page-title")
         titulo.set_xalign(0)
         self.append(titulo)
 
-        subtitulo = Gtk.Label(label="VISAO IA LOCAL")
+        subtitulo = Gtk.Label(label="Visão IA Local")
         subtitulo.add_css_class("section-title")
         subtitulo.set_xalign(0)
         self.append(subtitulo)
@@ -41,7 +41,7 @@ class CortexPage(Gtk.Box):
         self.append(Gtk.Separator())
 
         # Status do Ollama
-        status_frame = Gtk.Frame(label="OLLAMA")
+        status_frame = Gtk.Frame(label="Ollama")
         status_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         status_box.set_margin_top(8)
         status_box.set_margin_bottom(8)
@@ -66,7 +66,7 @@ class CortexPage(Gtk.Box):
         self.append(status_frame)
 
         # Botões de controle da IA
-        ctrl_frame = Gtk.Frame(label="CONTROLE")
+        ctrl_frame = Gtk.Frame(label="Controle")
         ctrl_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         ctrl_box.set_margin_top(8)
         ctrl_box.set_margin_bottom(8)
@@ -91,7 +91,7 @@ class CortexPage(Gtk.Box):
         self.append(ctrl_frame)
 
         # Grid de imagens analisadas (placeholder Sprint 1)
-        grid_frame = Gtk.Frame(label="ANALISES")
+        grid_frame = Gtk.Frame(label="Análises")
         grid_scroll = Gtk.ScrolledWindow()
         grid_scroll.set_vexpand(True)
         grid_scroll.set_min_content_height(300)
