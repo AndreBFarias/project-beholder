@@ -1,28 +1,55 @@
+# Caches
 __pycache__/
 *.py[cod]
 node_modules/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Venv
 venv/
 .venv/
+
+# Logs e dados
 logs/
 *.log
+
+# Dados de sessao
+data/
+output/
+dataset_assets.csv
+
+# Ollama local
+bin/
+models/
+
+# Secrets
 .env
 *.key
 *.pem
-.DS_Store
-Thumbs.db
+.git-credentials
+
+# IDE
 .vscode/
 .idea/
 *.swp
-bin/
-models/
-data/
-output/
-.superpowers/
-.ruff_cache/
-.pytest_cache/
-dataset_assets.csv
+*.swo
+*~
 
-# Rascunhos de planejamento pré-projeto
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Superpowers
+.superpowers/
+
+# Evidencias de IA
+Task_Final/
+IMPORTANT.md
+*.claude.md
+*_AI_*.md
+
+# Rascunhos de planejamento pre-projeto
 Estrutura de Pastas Beholder
 Layout UX Beholder
 Prompt
