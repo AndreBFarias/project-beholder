@@ -24,6 +24,7 @@ from src.core.config.defaults import DEFAULTS
 
 logger = logging.getLogger("beholder.ai_vision.ollama_lifecycle")
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _cfg_ia = DEFAULTS["IA"]
 PORTA_OLLAMA: int = _cfg_ia["ollama_port"]  # 11435
 BASE_URL = f"http://127.0.0.1:{PORTA_OLLAMA}"
@@ -122,8 +123,7 @@ class OllamaLifecycle:
         on_erro: Callable[[str], None],
     ) -> None:
         """Corpo da thread de inicialização."""
-        projeto_dir = Path.cwd()
-        binario = projeto_dir / "bin" / "ollama"
+        binario = _PROJECT_ROOT / "bin" / "ollama"
 
         if not binario.exists():
             msg = f"Binário não encontrado: {binario}"
@@ -133,8 +133,8 @@ class OllamaLifecycle:
 
         env = os.environ.copy()
         env["OLLAMA_HOST"] = f"127.0.0.1:{PORTA_OLLAMA}"
-        env["OLLAMA_TMPDIR"] = str(projeto_dir / _cfg_ia["ollama_tmpdir"])
-        env["OLLAMA_MODELS"] = str(projeto_dir / _cfg_ia["ollama_models"])
+        env["OLLAMA_TMPDIR"] = str(_PROJECT_ROOT / _cfg_ia["ollama_tmpdir"])
+        env["OLLAMA_MODELS"] = str(_PROJECT_ROOT / _cfg_ia["ollama_models"])
 
         Path(env["OLLAMA_TMPDIR"]).mkdir(parents=True, exist_ok=True)
         Path(env["OLLAMA_MODELS"]).mkdir(parents=True, exist_ok=True)
