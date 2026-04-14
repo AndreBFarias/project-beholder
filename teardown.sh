@@ -55,6 +55,6 @@ if [ -d "$OLLAMA_TMPDIR" ]; then
     log "OLLAMA_TMPDIR limpo ($OLLAMA_TMPDIR)."
 fi
 
-log "Teardown concluido."
+log "Teardown concluído."
 
-# "Retire o que e desnecessario e voce encontrara o suficiente." — Marco Aurelio
+# "Retire o que é desnecessário e você encontrará o suficiente." — Marco Aurélio

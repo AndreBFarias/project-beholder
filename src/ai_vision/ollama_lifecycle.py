@@ -144,15 +144,28 @@ class OllamaLifecycle:
                 self._processo = subprocess.Popen(
                     [str(binario), "serve"],
                     env=env,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
                 )
-                logger.info("Ollama iniciado — PID %d, porta %d", self._processo.pid, PORTA_OLLAMA)
+                logger.info(
+                    "Ollama iniciado — PID %d, porta %d",
+                    self._processo.pid,
+                    PORTA_OLLAMA,
+                )
             except OSError as exc:
                 msg = f"Falha ao iniciar Ollama: {exc}"
                 logger.error(msg)
                 GLib.idle_add(on_erro, msg)
                 return
+
+        # Thread leitora de stdout do Ollama (para mostrar progresso de download)
+        threading.Thread(
+            target=self._drenar_stdout,
+            daemon=True,
+            name="beholder-ollama-stdout",
+        ).start()
 
         # Aguardar até o endpoint responder
         inicio = time.monotonic()
@@ -172,6 +185,19 @@ class OllamaLifecycle:
         msg = f"Timeout: Ollama não respondeu em {TIMEOUT_STARTUP}s."
         logger.error(msg)
         GLib.idle_add(on_erro, msg)
+
+    def _drenar_stdout(self) -> None:
+        """Lê stdout do processo Ollama e loga cada linha."""
+        proc = self._processo
+        if proc is None or proc.stdout is None:
+            return
+        try:
+            for linha in proc.stdout:
+                texto = linha.rstrip()
+                if texto:
+                    logger.info("ollama: %s", texto)
+        except (ValueError, OSError):
+            pass
 
     def _thread_expurgar(self, on_concluido: Callable[[], None] | None) -> None:
         """Corpo da thread de encerramento."""
