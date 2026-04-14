@@ -49,23 +49,44 @@ else
 fi
 
 # ----------------------------------------------------------------------
-# 1. Verificar Python >= 3.12
+# 1. Verificar Python >= 3.10 com GI (PyGObject) disponível
 
 separador
 log "1/5 — Verificando Python..."
 
+# Prioridade: Python com GI bindings (necessário para GTK4)
+# O --system-site-packages só funciona se o venv for criado do mesmo
+# Python que tem os bindings compilados (tipicamente /usr/bin/python3).
 PYTHON_BIN=""
-for candidato in python3.12 python3.13 python3 python; do
+
+# Primeiro: tentar encontrar Python com GI disponível (>= 3.10)
+for candidato in /usr/bin/python3 python3 python3.12 python3.13 python3.11 python3.10; do
     if command -v "$candidato" >/dev/null 2>&1; then
-        if "$candidato" -c "import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)" 2>/dev/null; then
-            PYTHON_BIN="$candidato"
-            break
+        if "$candidato" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" 2>/dev/null; then
+            if "$candidato" -c "import gi" 2>/dev/null; then
+                PYTHON_BIN="$candidato"
+                log "Python com GI encontrado: $candidato"
+                break
+            fi
         fi
     fi
 done
 
+# Fallback: qualquer Python >= 3.10 (sem GI — GTK4 não vai funcionar)
 if [ -z "$PYTHON_BIN" ]; then
-    fail "Python 3.12+ não encontrado. Instale com: sudo apt install python3.12"
+    for candidato in python3.12 python3.13 python3.11 python3.10 python3 python; do
+        if command -v "$candidato" >/dev/null 2>&1; then
+            if "$candidato" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" 2>/dev/null; then
+                PYTHON_BIN="$candidato"
+                log "AVISO: Python sem GI — GTK4 pode não funcionar"
+                break
+            fi
+        fi
+    done
+fi
+
+if [ -z "$PYTHON_BIN" ]; then
+    fail "Python 3.10+ não encontrado. Instale com: sudo apt install python3"
 fi
 
 PYTHON_VER=$("$PYTHON_BIN" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')")

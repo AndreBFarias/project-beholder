@@ -13,7 +13,7 @@ ADR-01: todos os callbacks de UI chamados via GLib.idle_add.
 
 import logging
 import threading
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from gi.repository import GLib, Gtk
@@ -438,7 +438,7 @@ class ProtocoloPage(Gtk.Box):
             urls_concluidas=concluidas,
             urls_com_erro=com_erro,
             url_atual=url_atual,
-            timestamp=datetime.now(UTC).isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
         ckpt.salvar(estado)
 
