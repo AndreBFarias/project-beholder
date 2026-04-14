@@ -199,6 +199,22 @@ if [ -d "$OLLAMA_TMPDIR" ]; then
     rm -rf "$OLLAMA_TMPDIR"
 fi
 
+# PRE-FLIGHT: verificar binário Ollama (ADR-03: isolado em bin/ollama)
+OLLAMA_BIN="$PROJECT_DIR/bin/ollama"
+if [ ! -f "$OLLAMA_BIN" ]; then
+    log "bin/ollama ausente — baixando binário..."
+    OLLAMA_URL="https://ollama.com/download/ollama-linux-amd64"
+    mkdir -p "$PROJECT_DIR/bin"
+    if curl -fSL --progress-bar "$OLLAMA_URL" -o "$OLLAMA_BIN"; then
+        chmod +x "$OLLAMA_BIN"
+        log "bin/ollama baixado com sucesso."
+    else
+        log "AVISO: Falha ao baixar Ollama — análise de IA indisponível."
+        log "       Baixe manualmente de https://ollama.com/download e salve em bin/ollama"
+        rm -f "$OLLAMA_BIN"
+    fi
+fi
+
 # PRE-FLIGHT: verificar modelo Moondream
 verificar_modelo_ollama
 
