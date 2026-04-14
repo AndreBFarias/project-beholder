@@ -26,6 +26,8 @@ from src.gui.widgets import StatusBar
 
 logger = logging.getLogger("beholder.gui.main_window")
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 
 class BeholderWindow(Adw.ApplicationWindow):
     """Janela principal do Beholder."""
@@ -41,7 +43,7 @@ class BeholderWindow(Adw.ApplicationWindow):
 
     def _definir_icone(self) -> None:
         """Define o ícone da janela a partir do beholder-icon.png."""
-        icon_path = Path("beholder-icon.png")
+        icon_path = _PROJECT_ROOT / "beholder-icon.png"
         if not icon_path.exists():
             return
         try:
@@ -54,13 +56,13 @@ class BeholderWindow(Adw.ApplicationWindow):
 
                 shutil.copy2(str(icon_path.resolve()), str(dest))
             self.set_icon_name("com.beholder.app")
-        except Exception:
-            # Fallback: tenta carregar direto via GdkPixbuf (deprecado em GTK4 mas funcional)
+        except Exception as exc:
+            logger.debug("Falha ao instalar ícone via hicolor: %s", exc)
             try:
                 GdkPixbuf.Pixbuf.new_from_file(str(icon_path.resolve()))
                 Gtk.Window.set_default_icon_name("beholder-icon")
-            except Exception:
-                pass
+            except Exception as exc_inner:
+                logger.debug("Fallback de ícone também falhou: %s", exc_inner)
 
     def _build_ui(self) -> None:
         # Container principal vertical
@@ -107,6 +109,11 @@ class BeholderWindow(Adw.ApplicationWindow):
         caixa_principal.append(self._status_bar)
 
         self.set_content(caixa_principal)
+
+        # Conectar StatusBar a todas as páginas que a utilizam
+        for pagina in self._paginas.values():
+            if hasattr(pagina, "conectar_status_bar"):
+                pagina.conectar_status_bar(self._status_bar)
 
         # Selecionar Caçada como página inicial
         self._stack.set_visible_child_name("cacada")

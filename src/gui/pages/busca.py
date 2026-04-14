@@ -15,7 +15,7 @@ import logging
 from gi.repository import Gtk
 
 from src.core.asset_queue import filas
-from src.gui.widgets import LogTerminal
+from src.gui.widgets import LogTerminal, StatusBar
 from src.scraper.stealth_spider import StealthSpider
 
 logger = logging.getLogger("beholder.gui.cacada")
@@ -35,7 +35,12 @@ class CacadaPage(Gtk.Box):
             on_progresso=self._cb_progresso,
             on_concluido=self._cb_concluido,
         )
+        self._status_bar: StatusBar | None = None
         self._build_ui()
+
+    def conectar_status_bar(self, status_bar: StatusBar) -> None:
+        """Conecta a barra de status global para atualizações em tempo real."""
+        self._status_bar = status_bar
 
     def _build_ui(self) -> None:
         # Título da página
@@ -156,6 +161,8 @@ class CacadaPage(Gtk.Box):
         modo_furtivo = self._toggle_furtivo.get_active()
         filas.nova_sessao()
         self._spider.iniciar(url, modo_furtivo=modo_furtivo)
+        if self._status_bar:
+            self._status_bar.update(status="ativa", sessao="busca")
         logger.info("Caçada iniciada: %s (furtivo=%s)", url, modo_furtivo)
 
     def _on_pausar(self, _btn: Gtk.Button) -> None:
@@ -184,6 +191,8 @@ class CacadaPage(Gtk.Box):
         """Recebe atualização de progresso da thread."""
         self._progresso.set_fraction(max(0.0, min(1.0, fracao)))
         self._progresso.set_text(texto)
+        if self._status_bar:
+            self._status_bar.update(status="ativa", sessao="busca")
 
     def _cb_concluido(self, total: int) -> None:
         """Restaura a UI ao estado inicial após o término do scraping."""
@@ -192,4 +201,6 @@ class CacadaPage(Gtk.Box):
         self._btn_pausar.set_visible(False)
         self._btn_cancelar.set_visible(False)
         self._entry_url.set_sensitive(True)
+        if self._status_bar:
+            self._status_bar.update(status="concluída", baixados=total, total=total, sessao="busca")
         logger.info("Caçada concluída — %d assets", total)

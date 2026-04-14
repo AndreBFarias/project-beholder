@@ -20,6 +20,7 @@ from gi.repository import GLib, Gtk
 
 from src.core import checkpoint as ckpt
 from src.core.checkpoint import EstadoCheckpoint
+from src.gui.widgets import StatusBar
 from src.scraper.stealth_spider import StealthSpider
 
 logger = logging.getLogger("beholder.gui.protocolo")
@@ -40,7 +41,12 @@ class ProtocoloPage(Gtk.Box):
         self.set_margin_end(24)
         self._thread_lote: threading.Thread | None = None
         self._parar_lote = threading.Event()
+        self._status_bar: StatusBar | None = None
         self._build_ui()
+
+    def conectar_status_bar(self, status_bar: StatusBar) -> None:
+        """Conecta a barra de status global para atualizações em tempo real."""
+        self._status_bar = status_bar
 
     def _build_ui(self) -> None:
         # Título
@@ -345,6 +351,15 @@ class ProtocoloPage(Gtk.Box):
             fracao = (i + 1) / total
             GLib.idle_add(self._barra_lote.set_fraction, fracao)
             GLib.idle_add(self._barra_lote.set_text, f"{i + 1} / {total}")
+            if self._status_bar:
+                GLib.idle_add(
+                    self._status_bar.update,
+                    "ativa",
+                    i + 1,
+                    total,
+                    None,
+                    "lote",
+                )
 
         # Limpeza final
         GLib.idle_add(self._finalizar_lote, total, concluidas, com_erro)
@@ -407,8 +422,8 @@ class ProtocoloPage(Gtk.Box):
             it = self._store.get_iter(path)
             if it:
                 self._store.set_value(it, COL_STATUS, status)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Falha ao atualizar status da linha %s: %s", path_str, exc)
 
     def _salvar_checkpoint(
         self,
@@ -435,4 +450,11 @@ class ProtocoloPage(Gtk.Box):
         self._barra_lote.set_fraction(1.0)
         self._barra_lote.set_text(f"{len(concluidas)} / {total}")
         self._label_status_lote.set_label(f"[OK] Lote concluído — {len(concluidas)} OK, {len(com_erro)} erro(s)")
+        if self._status_bar:
+            self._status_bar.update(
+                status="concluída",
+                baixados=len(concluidas),
+                total=total,
+                sessao="lote",
+            )
         logger.info("Lote encerrado: %d/%d URLs", len(concluidas), total)

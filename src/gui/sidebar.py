@@ -22,7 +22,8 @@ from src.gui.theme import (
 
 logger = logging.getLogger("beholder.gui.sidebar")
 
-LOGO_PATH = Path("beholder-icon.png")
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+LOGO_PATH = _PROJECT_ROOT / "beholder-icon.png"
 LOGO_SIZE = 80
 
 # Definição dos itens da sidebar: (id, nome, descrição, cor, ícone adwaita)
@@ -107,7 +108,8 @@ class Sidebar(Gtk.Box):
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(LOGO_PATH), LOGO_SIZE, LOGO_SIZE, True)
                 logo_img = Gtk.Image.new_from_pixbuf(pixbuf)
                 logo_img.set_size_request(LOGO_SIZE, LOGO_SIZE)
-            except Exception:
+            except Exception as exc:
+                logger.debug("Falha ao carregar logo: %s", exc)
                 logo_img = Gtk.Image.new_from_icon_name("image-missing")
         else:
             logo_img = Gtk.Image.new_from_icon_name("application-x-executable")

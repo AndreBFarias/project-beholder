@@ -36,6 +36,8 @@ from src.scraper.html_parser import extrair_assets
 
 logger = logging.getLogger("beholder.scraper.stealth_spider")
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 # User-agents realistas para rotação no modo furtivo
 USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -104,7 +106,7 @@ class StealthSpider:
     # API pública
     # ------------------------------------------------------------------
 
-    def iniciar(self, url: str, diretorio_saida: str = "data/sessao_atual", modo_furtivo: bool = False) -> None:
+    def iniciar(self, url: str, diretorio_saida: str | None = None, modo_furtivo: bool = False) -> None:
         """Inicia o scraping em thread separada. Ignorado se já em execução.
 
         Args:
@@ -159,9 +161,9 @@ class StealthSpider:
     # Thread A — execução interna
     # ------------------------------------------------------------------
 
-    def _executar(self, url: str, diretorio_saida: str, modo_furtivo: bool) -> None:
+    def _executar(self, url: str, diretorio_saida: str | None, modo_furtivo: bool) -> None:
         """Corpo da Thread A: baixa página, extrai e baixa assets."""
-        dir_saida = Path(diretorio_saida)
+        dir_saida = Path(diretorio_saida) if diretorio_saida else _PROJECT_ROOT / DEFAULTS["Saida"]["diretorio_data"]
         dir_saida.mkdir(parents=True, exist_ok=True)
         total_baixados = 0
 

@@ -64,7 +64,8 @@ class OllamaLifecycle:
         try:
             with httpx.Client(timeout=2.0) as client:
                 return client.get(f"{BASE_URL}/api/tags").status_code == 200
-        except Exception:
+        except Exception as exc:
+            logger.debug("Ping falhou: %s", exc)
             return False
 
     # ------------------------------------------------------------------

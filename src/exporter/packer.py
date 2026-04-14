@@ -14,6 +14,7 @@ import zipfile
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from queue import Empty
 
 from gi.repository import GLib
 
@@ -22,6 +23,8 @@ from src.core.config.defaults import DEFAULTS
 from src.exporter.dataset_writer import escrever_csv, subpasta_tipo
 
 logger = logging.getLogger("beholder.exporter.packer")
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 CallbackLog = Callable[[str], None]
 CallbackConcluido = Callable[[str], None]  # recebe caminho do zip
@@ -44,17 +47,23 @@ class Packer:
         self._on_log = on_log
         self._on_concluido = on_concluido
         self._thread: threading.Thread | None = None
-        self._dir_output = Path(DEFAULTS["Saida"]["diretorio_output"])
+        self._evento_parar = threading.Event()
+        self._dir_output = _PROJECT_ROOT / DEFAULTS["Saida"]["diretorio_output"]
 
     # ------------------------------------------------------------------
     # API pública
     # ------------------------------------------------------------------
+
+    def cancelar(self) -> None:
+        """Sinaliza para a Thread C encerrar graciosamente."""
+        self._evento_parar.set()
 
     def iniciar(self) -> None:
         """Inicia Thread C. Ignorado se já em execução."""
         if self._thread and self._thread.is_alive():
             logger.warning("Packer já em execução — ignorando iniciar()")
             return
+        self._evento_parar.clear()
         self._thread = threading.Thread(
             target=self._executar,
             daemon=True,
@@ -77,8 +86,11 @@ class Packer:
         staging = self._dir_output / f"staging_{timestamp}"
 
         try:
-            while True:
-                item = filas.processada.get()
+            while not self._evento_parar.is_set():
+                try:
+                    item = filas.processada.get(timeout=1.0)
+                except Empty:
+                    continue
                 if item is SENTINEL:
                     logger.info("Packer recebeu SENTINEL — encerrando")
                     break

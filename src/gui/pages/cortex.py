@@ -18,7 +18,7 @@ from gi.repository import Gtk, Pango
 from src.ai_vision.ollama_lifecycle import OllamaLifecycle
 from src.ai_vision.orchestrator import Orchestrator
 from src.core.asset_queue import AssetProcessado
-from src.gui.widgets import LogTerminal
+from src.gui.widgets import LogTerminal, StatusBar
 
 logger = logging.getLogger("beholder.gui.cortex")
 
@@ -35,8 +35,8 @@ def _criar_swatches(paleta: list[str]) -> Gtk.Box:
             provider = Gtk.CssProvider()
             provider.load_from_data(f"label {{ background-color: {cor}; }}".encode())
             swatch.get_style_context().add_provider(provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("CSS provider falhou para swatch %s: %s", cor, exc)
         caixa.append(swatch)
     return caixa
 
@@ -113,7 +113,13 @@ class CortexPage(Gtk.Box):
             on_asset=self._cb_asset_processado,
             on_concluido=self._cb_orquestrador_concluido,
         )
+        self._espolio = None
+        self._status_bar: StatusBar | None = None
         self._build_ui()
+
+    def conectar_status_bar(self, status_bar: StatusBar) -> None:
+        """Conecta a barra de status global para atualizações em tempo real."""
+        self._status_bar = status_bar
 
     def conectar_espolio(self, espolio_page) -> None:
         """Conecta o Córtex ao Espólio para alimentar contadores de exportação."""
@@ -280,6 +286,8 @@ class CortexPage(Gtk.Box):
         self._btn_pausar_ia.set_sensitive(True)
         self._log_ia.append_line(f"[OK] {msg}")
         self._orchestrator.iniciar()
+        if self._status_bar:
+            self._status_bar.update(status="ativa", sessao="análise")
         logger.info("Córtex: Ollama pronto, Orchestrator iniciado — %s", msg)
 
     def _cb_ollama_erro(self, msg: str) -> None:
@@ -298,6 +306,8 @@ class CortexPage(Gtk.Box):
         self._btn_pausar_ia.set_sensitive(False)
         self._btn_pausar_ia.set_label("PAUSAR IA")
         self._log_ia.append_line("[INFO] VRAM liberada.")
+        if self._status_bar:
+            self._status_bar.update(status="nova", vram_gb=0.0, sessao="offline")
         logger.info("Córtex: Ollama expurgado")
 
     def _cb_log(self, msg: str) -> None:
@@ -313,7 +323,7 @@ class CortexPage(Gtk.Box):
         card = _criar_card_asset(asset)
         self._listbox_grid.prepend(card)
 
-        if hasattr(self, "_espolio") and self._espolio:
+        if self._espolio:
             self._espolio.registrar_asset(asset)
 
     def _cb_orquestrador_concluido(self, total: int) -> None:
@@ -321,6 +331,8 @@ class CortexPage(Gtk.Box):
         self._btn_pausar_ia.set_sensitive(False)
         self._btn_pausar_ia.set_label("PAUSAR IA")
         self._log_ia.append_line(f"[INFO] Análise concluída — {total} assets.")
+        if self._status_bar:
+            self._status_bar.update(status="concluída", baixados=total, total=total, sessao="análise")
         logger.info("Córtex: Orchestrator concluído — %d assets", total)
 
     # ------------------------------------------------------------------

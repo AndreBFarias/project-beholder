@@ -6,9 +6,9 @@ Define as constantes de cor e gera o CSS aplicado globalmente na aplicação.
 
 from gi.repository import Gdk, Gtk
 
-# Paleta Dracula completa
+# Paleta Dracula — spec.draculatheme.com
 DRACULA_BG = "#282a36"
-DRACULA_CURRENT = "#44475a"
+DRACULA_CURRENT = "#44475a"  # Selection
 DRACULA_FG = "#f8f8f2"
 DRACULA_COMMENT = "#6272a4"
 DRACULA_PURPLE = "#bd93f9"
@@ -19,6 +19,18 @@ DRACULA_CYAN = "#8be9fd"
 DRACULA_RED = "#ff5555"
 DRACULA_YELLOW = "#f1fa8c"
 
+# ANSI Normal
+DRACULA_ANSI_BLACK = "#21222c"
+
+# ANSI Bright — usados para hover e estados interativos
+DRACULA_BRIGHT_RED = "#ff6e6e"
+DRACULA_BRIGHT_GREEN = "#69ff94"
+DRACULA_BRIGHT_YELLOW = "#ffffa5"
+DRACULA_BRIGHT_BLUE = "#d6acff"
+DRACULA_BRIGHT_MAGENTA = "#ff92df"
+DRACULA_BRIGHT_CYAN = "#a4ffff"
+DRACULA_BRIGHT_WHITE = "#ffffff"
+
 CSS_DRACULA = f"""
 window,
 .main-window {{
@@ -26,12 +38,12 @@ window,
     color: {DRACULA_FG};
 }}
 headerbar {{
-    background-color: #21222c;
+    background-color: {DRACULA_ANSI_BLACK};
     border-bottom: 1px solid {DRACULA_CURRENT};
     color: {DRACULA_FG};
 }}
 .sidebar {{
-    background-color: #21222c;
+    background-color: {DRACULA_ANSI_BLACK};
     border-right: 1px solid {DRACULA_CURRENT};
 }}
 .sidebar-header {{
@@ -56,7 +68,7 @@ headerbar {{
 }}
 listbox,
 .nav-listbox {{
-    background-color: #21222c;
+    background-color: {DRACULA_ANSI_BLACK};
 }}
 listbox row,
 .nav-row {{
@@ -76,7 +88,7 @@ listbox row:hover,
     background-color: {DRACULA_CURRENT};
 }}
 .status-bar {{
-    background-color: #1e1f29;
+    background-color: {DRACULA_ANSI_BLACK};
     border-top: 1px solid {DRACULA_CURRENT};
     padding: 5px 12px;
     font-family: monospace;
@@ -99,6 +111,10 @@ listbox row:hover,
     color: {DRACULA_CYAN};
     font-weight: bold;
 }}
+.status-dot-aviso {{
+    color: {DRACULA_YELLOW};
+    font-weight: bold;
+}}
 .btn-primary {{
     background-color: {DRACULA_PURPLE};
     color: {DRACULA_BG};
@@ -108,7 +124,7 @@ listbox row:hover,
     padding: 9px 22px;
 }}
 .btn-primary:hover {{
-    background-color: #caa4ff;
+    background-color: {DRACULA_BRIGHT_BLUE};
 }}
 .btn-primary:disabled {{
     background-color: {DRACULA_CURRENT};
@@ -122,7 +138,7 @@ listbox row:hover,
     padding: 9px 22px;
 }}
 .btn-secondary:hover {{
-    background-color: #555770;
+    background-color: {DRACULA_COMMENT};
 }}
 .btn-danger {{
     background-color: {DRACULA_RED};
@@ -133,7 +149,7 @@ listbox row:hover,
     font-weight: bold;
 }}
 .btn-danger:hover {{
-    background-color: #ff7777;
+    background-color: {DRACULA_BRIGHT_RED};
 }}
 .btn-warning {{
     background-color: {DRACULA_ORANGE};
@@ -144,7 +160,7 @@ listbox row:hover,
     font-weight: bold;
 }}
 .log-terminal {{
-    background-color: #1e1f29;
+    background-color: {DRACULA_ANSI_BLACK};
     color: {DRACULA_GREEN};
     font-family: monospace;
     font-size: 14px;
@@ -154,13 +170,13 @@ listbox row:hover,
 }}
 textview,
 textview text {{
-    background-color: #1e1f29;
+    background-color: {DRACULA_ANSI_BLACK};
     color: {DRACULA_GREEN};
     font-family: monospace;
     font-size: 14px;
 }}
 entry {{
-    background-color: #21222c;
+    background-color: {DRACULA_ANSI_BLACK};
     color: {DRACULA_FG};
     border: 1px solid {DRACULA_CURRENT};
     border-radius: 5px;
@@ -213,12 +229,12 @@ frame > label {{
     font-weight: bold;
 }}
 treeview {{
-    background-color: #21222c;
+    background-color: {DRACULA_ANSI_BLACK};
     color: {DRACULA_FG};
     font-size: 13px;
 }}
 treeview > row {{
-    background-color: #21222c;
+    background-color: {DRACULA_ANSI_BLACK};
     color: {DRACULA_FG};
 }}
 treeview > row:selected {{
@@ -226,13 +242,13 @@ treeview > row:selected {{
     color: {DRACULA_FG};
 }}
 treeview > header > button {{
-    background-color: #1e1f29;
+    background-color: {DRACULA_ANSI_BLACK};
     color: {DRACULA_COMMENT};
     border-bottom: 1px solid {DRACULA_CURRENT};
     font-size: 13px;
 }}
 columnview {{
-    background-color: #21222c;
+    background-color: {DRACULA_ANSI_BLACK};
     color: {DRACULA_FG};
 }}
 """
