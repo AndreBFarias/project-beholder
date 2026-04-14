@@ -99,6 +99,61 @@ OLLAMA_MODELS="$PROJECT_DIR/models"
 fila_scraper.put(None)  # Thread B para quando recebe None
 ```
 
+## Estado das Sprints
+
+| Sprint | Status | Descrição |
+|--------|--------|-----------|
+| 0 | COMPLETA | Infra: dirs, hooks, pyproject.toml, CLAUDE.md, ADRs |
+| 1 | COMPLETA | UI Shell: GTK4 + tema Dracula |
+| 2 | COMPLETA | Config + Logging |
+| 3 | COMPLETA | Scraper básico (requests) |
+| 4 | COMPLETA | Modo Furtivo (Playwright) |
+| 5 | COMPLETA | Ollama Lifecycle (ADR-03) |
+| 6 | COMPLETA | Moondream + K-Means |
+| 7 | COMPLETA | Espólio: .zip + CSV |
+| 8 | COMPLETA | Protocolo: batch + checkpoints |
+| 9 | COMPLETA | Grimório: configurações persistidas |
+| 10 | COMPLETA | Polish visual das 5 abas |
+| 11 | BACKLOG | UI: Espólio redesign + textos + status bar (#6) |
+| 12 | BACKLOG | Instalação: .desktop + moondream + venv fix (#7) |
+| 13 | BACKLOG | Correções retroativas da auditoria (#8) |
+| 14 | BACKLOG | Packaging: deb + flatpak + appimage (#9) |
+| 15 | BACKLOG | Workflow CI/CD + pre-commit screenshots (#10) |
+
+## Bugs Conhecidos (Auditoria Sprints 0–10)
+
+### Críticos
+
+| ID | Arquivo | Problema |
+|----|---------|---------|
+| BUG-01 | `install.sh:88` | venv sem `--system-site-packages` — GTK4 pode não funcionar (Sprint 12) |
+| BUG-02 | `asset_queue.py:44` | Filas singleton causam deadlock entre sessões (Sprint 13) |
+| BUG-03 | `orchestrator.py:~111` | `get()` sem timeout — cancelamento não encerra a thread (Sprint 13) |
+| BUG-04 | `protocolo.py:~327` | Timeout não marca URL como erro (Sprint 13) |
+| BUG-05 | `cortex.py + espolio.py` | `registrar_asset()` nunca chamado — Espólio sempre vazio (Sprint 13) |
+
+### Importantes
+
+| ID | Arquivo | Problema |
+|----|---------|---------|
+| BUG-06 | `cortex.py:~64` | `set_ellipsize(3)` — magic number |
+| BUG-07 | `logging_config.py:13` | `Path("logs")` relativo ao CWD |
+| BUG-08 | `ollama_lifecycle.py:~125` | `Path.cwd()` para localizar binário |
+| BUG-09 | `grimorio.py:~215` | HTTP síncrono na thread GTK |
+| BUG-11 | `stealth_spider.py:~255` | `hash()` instável para nomes de arquivo |
+
+## Distribuição
+
+O Beholder suporta 3 formatos de distribuição (Sprint 14):
+
+- **`.deb`** — Ubuntu/Debian: `sudo dpkg -i beholder_VERSION_amd64.deb`
+- **Flatpak** — universal GNOME: `flatpak install beholder.flatpak`
+- **AppImage** — universal Linux: `./Beholder-VERSION-x86_64.AppImage`
+
+Builds automáticos via `.github/workflows/release.yml` ao criar tag `v*`.
+
+---
+
 ## Checklists
 
 ### Pré-Sprint
