@@ -1,7 +1,7 @@
 # Sprint 13 — Correções Retroativas (Auditoria)
 
 **Issue:** #8
-**Status:** Backlog
+**Status:** Completa
 **Prioridade:** Crítica
 
 ---
@@ -91,4 +91,4 @@ Esta sprint corrige todos eles. Ver relatório completo no issue #8.
 - Timeout no Protocolo marca URL como "erro" (não "concluída")
 - Espólio mostra contadores corretos após análise
 - EXPORTAR CSV exporta assets reais
-- `just ci-local` verde com 70+ testes
+- `just ci-local` verde com 97 testes

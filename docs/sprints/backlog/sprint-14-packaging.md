@@ -38,7 +38,7 @@ debian/
 ## Dependências de Sistema (para .deb e AppImage)
 
 ```
-python3 (>= 3.12)
+python3 (>= 3.10)
 python3-gi
 python3-gi-cairo
 gir1.2-gtk-4.0

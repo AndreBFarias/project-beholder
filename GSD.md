@@ -96,7 +96,8 @@ OLLAMA_MODELS="$PROJECT_DIR/models"
 ### Sentinel nas filas
 ```python
 # Sempre enviar SENTINEL ao final para sinalizar EOF:
-fila_scraper.put(None)  # Thread B para quando recebe None
+from src.core.asset_queue import SENTINEL, filas
+filas.scraper.put(SENTINEL)  # Thread B para quando recebe SENTINEL
 ```
 
 ## Estado das Sprints
@@ -230,7 +231,7 @@ just lint           # ruff format + check
 ## Módulos e Arquivos-Chave
 | Módulo | Arquivo principal | Thread |
 |--------|-------------------|--------|
-| Caçada (UI) | src/gui/pages/cacada.py | main |
+| Busca (UI) | src/gui/pages/busca.py | main |
 | Scraper | src/scraper/stealth_spider.py | Thread A |
 | AI Worker | src/ai_vision/orchestrator.py | Thread B |
 | Exporter | src/exporter/packer.py | Thread C |

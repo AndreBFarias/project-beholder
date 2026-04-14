@@ -1,7 +1,7 @@
 # Sprint 12 — Instalação, .desktop e Download do Moondream
 
 **Issue:** #7
-**Status:** Backlog
+**Status:** Completa
 **Prioridade:** Alta
 
 ---
@@ -54,4 +54,4 @@ O `run.sh` não verifica nem baixa o modelo Moondream. O `OllamaLifecycle` trava
 - App aparece no launcher do GNOME
 - `./run.sh` baixa Moondream se ausente (com `bin/ollama` presente)
 - ANALISAR mostra progresso do download no Log IA
-- 66+ testes passando
+- 97 testes passando
