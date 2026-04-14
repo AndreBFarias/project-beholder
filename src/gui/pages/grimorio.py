@@ -235,9 +235,7 @@ class GrimorioPage(Gtk.Box):
                 if resp.status_code == 200:
                     GLib.idle_add(self._label_status.set_label, f"[OK] Ollama online na porta {porta}.")
                 else:
-                    GLib.idle_add(
-                        self._label_status.set_label, f"[AVISO] Ollama respondeu HTTP {resp.status_code}."
-                    )
+                    GLib.idle_add(self._label_status.set_label, f"[AVISO] Ollama respondeu HTTP {resp.status_code}.")
         except httpx.ConnectError:
             GLib.idle_add(self._label_status.set_label, f"[OFFLINE] Ollama não responde na porta {porta}.")
         except Exception as exc:
