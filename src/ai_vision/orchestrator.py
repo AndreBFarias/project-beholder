@@ -12,7 +12,7 @@ import logging
 import threading
 from collections.abc import Callable
 from datetime import datetime, timezone
-from queue import Empty
+from queue import Empty, Full
 
 from gi.repository import GLib
 
@@ -144,7 +144,12 @@ class Orchestrator:
                     timestamp=datetime.now(timezone.utc).isoformat(),
                 )
 
-                filas.processada.put(processado)
+                try:
+                    filas.processada.put(processado, timeout=10.0)
+                except Full:
+                    self._log(f"[AVISO] Fila processada cheia — asset descartado: {asset_bruto.url}")
+                    logger.warning("Fila processada cheia — asset descartado: %s", asset_bruto.url)
+                    continue
                 total += 1
 
                 paleta_resumida = ", ".join(paleta[:2]) if paleta else "—"
@@ -155,7 +160,16 @@ class Orchestrator:
             logger.exception("Erro inesperado no Orchestrator")
             self._log(f"[ERRO] {exc}")
         finally:
-            filas.processada.put(SENTINEL)
+            try:
+                filas.processada.put(SENTINEL, timeout=30.0)
+            except Full:
+                logger.warning("Fila processada cheia ao enviar SENTINEL — drenando")
+                while not filas.processada.empty():
+                    try:
+                        filas.processada.get_nowait()
+                    except Empty:
+                        break
+                filas.processada.put(SENTINEL)
             self._log(f"[INFO] Orquestrador encerrado — {total} assets analisados.")
             GLib.idle_add(self._on_concluido, total)
 
