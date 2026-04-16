@@ -4,6 +4,7 @@
 [![Licença](https://img.shields.io/badge/licenca-GPL--3.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-green.svg)](https://www.python.org/)
 [![GTK](https://img.shields.io/badge/GTK-4.0-green.svg)](https://www.gtk.org/)
+[![CI](https://github.com/AndreBFarias/project-beholder/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreBFarias/project-beholder/actions/workflows/ci.yml)
 
 <div align="center">
   <h1>Project Beholder</h1>
@@ -14,9 +15,9 @@
 
 ---
 
-### Descricao
+### Descrição
 
-Motor autonomo de predacao visual para Linux. O Beholder varre a web, captura assets de interface (icones, vetores, fundos, logos) e os analisa via visao computacional com modelos locais via Ollama. Gera arquivos `.csv` e `.zip` estruturados prontos para consumo por outros repositorios.
+Motor autônomo de predação visual para Linux. O Beholder varre a web, captura assets de interface (ícones, vetores, fundos, logos) e os analisa via visão computacional com modelos locais via Ollama. Gera arquivos `.csv` e `.zip` estruturados prontos para consumo por outros repositórios.
 
 ---
 
