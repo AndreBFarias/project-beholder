@@ -237,6 +237,17 @@ fi
 # PRE-FLIGHT: verificar modelos de visão (moondream, minicpm-v, llava:7b)
 verificar_modelos_ollama
 
+# PRE-FLIGHT: garantir Playwright chromium (modo furtivo)
+# O comando é idempotente — se já instalado, sai rápido
+if [ -f "$VENV_DIR/bin/playwright" ]; then
+    log "Verificando Playwright chromium..."
+    if "$VENV_DIR/bin/playwright" install chromium 2>&1 | tail -3; then
+        log "Playwright chromium verificado."
+    else
+        log "AVISO: Playwright chromium indisponível — modo furtivo usará fallback"
+    fi
+fi
+
 # ----------------------------------------------------------------------
 # INICIAR
 

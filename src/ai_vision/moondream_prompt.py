@@ -21,6 +21,8 @@ _cfg = DEFAULTS["IA"]
 _BASE_URL = f"http://127.0.0.1:{_cfg['ollama_port']}"
 _TIMEOUT = _cfg["timeout_analise"]
 
+_TIPOS_VALIDOS = {"icon", "background", "logo", "vector", "photo", "ui_element", "other"}
+
 
 def _resolver_modelo() -> str:
     """Resolve o nome do modelo a partir do tier configurado."""
@@ -32,10 +34,10 @@ def _resolver_modelo() -> str:
 
 
 PROMPT_CLASSIFICACAO = (
-    "Analyze this image and respond ONLY with valid JSON, no other text: "
-    '{"tipo": "icon|background|logo|vector|photo|ui_element|other", '
-    '"descricao": "brief description in up to 20 words", '
-    '"tags": ["tag1", "tag2", "tag3"]}'
+    "What is this image? Answer with exactly this format:\n"
+    "type: icon OR background OR logo OR vector OR photo OR ui_element OR other\n"
+    "description: one short sentence\n"
+    "tags: word1, word2, word3"
 )
 
 _FALLBACK: dict = {"tipo": "other", "descricao": "análise indisponível", "tags": []}
@@ -43,7 +45,7 @@ _FALLBACK: dict = {"tipo": "other", "descricao": "análise indisponível", "tags
 
 def analisar_imagem(caminho: str | Path) -> dict:
     """
-    Envia a imagem para Moondream via Ollama e retorna o JSON analisado.
+    Envia a imagem para o modelo de visão via Ollama e retorna a análise.
 
     Args:
         caminho: Caminho local do arquivo de imagem.
@@ -58,43 +60,104 @@ def analisar_imagem(caminho: str | Path) -> dict:
         logger.error("Falha ao ler imagem %s: %s", caminho, exc)
         return _FALLBACK.copy()
 
-    payload = {
-        "model": _resolver_modelo(),
-        "prompt": PROMPT_CLASSIFICACAO,
-        "images": [imagem_b64],
-        "stream": False,
-        "options": {"num_predict": 200},
-    }
+    for tentativa, temperatura in enumerate([0.1, 0.3], start=1):
+        payload = {
+            "model": _resolver_modelo(),
+            "prompt": PROMPT_CLASSIFICACAO,
+            "images": [imagem_b64],
+            "stream": False,
+            "options": {"num_predict": 150, "temperature": temperatura},
+        }
 
-    try:
-        with httpx.Client(timeout=_TIMEOUT) as client:
-            resp = client.post(f"{_BASE_URL}/api/generate", json=payload)
-            resp.raise_for_status()
-            texto = resp.json().get("response", "")
-            return _parsear_resposta(texto)
-    except httpx.HTTPError as exc:
-        logger.error("Erro HTTP ao analisar %s: %s", caminho, exc)
-        return _FALLBACK.copy()
-    except Exception:
-        logger.exception("Erro inesperado ao analisar %s", caminho)
-        return _FALLBACK.copy()
+        try:
+            with httpx.Client(timeout=_TIMEOUT) as client:
+                resp = client.post(f"{_BASE_URL}/api/generate", json=payload)
+                resp.raise_for_status()
+                texto = resp.json().get("response", "")
+                resultado = _parsear_resposta(texto)
+
+                if resultado != _FALLBACK and resultado.get("tipo") != "other":
+                    return resultado
+
+                if tentativa == 1:
+                    logger.info("Primeira tentativa retornou fallback para %s — retry", caminho)
+                    continue
+
+                return resultado
+
+        except httpx.HTTPError as exc:
+            logger.error("Erro HTTP ao analisar %s: %s", caminho, exc)
+            return _FALLBACK.copy()
+        except Exception:
+            logger.exception("Erro inesperado ao analisar %s", caminho)
+            return _FALLBACK.copy()
+
+    return _FALLBACK.copy()
 
 
 def _parsear_resposta(texto: str) -> dict:
-    """Extrai JSON da resposta do modelo. Tolerante a texto extra ao redor."""
-    # Parse direto
+    """Extrai dados estruturados da resposta do modelo. Tolerante a formatos variados."""
+    # Tentativa 1: JSON direto
     try:
-        return json.loads(texto.strip())
+        resultado = json.loads(texto.strip())
+        if _validar_resultado(resultado):
+            return resultado
     except json.JSONDecodeError:
         pass
 
-    # Extrai primeiro bloco {...} encontrado
-    match = re.search(r"\{.*?\}", texto, re.DOTALL)
+    # Tentativa 2: extrair primeiro bloco {...}
+    match = re.search(r"\{[^}]+\}", texto, re.DOTALL)
     if match:
         try:
-            return json.loads(match.group())
+            resultado = json.loads(match.group())
+            if _validar_resultado(resultado):
+                return resultado
         except json.JSONDecodeError:
             pass
 
-    logger.warning("Resposta não parseável: %.100s", texto)
+    # Tentativa 3: parse chave-valor (type:, description:, tags:)
+    resultado = _parse_chave_valor(texto)
+    if resultado:
+        return resultado
+
+    logger.warning("Resposta não parseável: %.200s", texto)
     return _FALLBACK.copy()
+
+
+def _parse_chave_valor(texto: str) -> dict | None:
+    """Parse de formato 'type: X / description: Y / tags: a, b, c'."""
+    tipo_match = re.search(r"(?:type|tipo)\s*:\s*(\w[\w_]*)", texto, re.IGNORECASE)
+    desc_match = re.search(r"(?:description|descri[çc][ãa]o)\s*:\s*(.+?)(?:\n|$)", texto, re.IGNORECASE)
+    tags_match = re.search(r"tags?\s*:\s*(.+?)(?:\n|$)", texto, re.IGNORECASE)
+
+    if not tipo_match:
+        return None
+
+    tipo = tipo_match.group(1).lower().strip()
+    if tipo not in _TIPOS_VALIDOS:
+        tipo = "other"
+
+    descricao = desc_match.group(1).strip() if desc_match else ""
+    tags_raw = tags_match.group(1).strip() if tags_match else ""
+    tags = [t.strip().strip("#").strip() for t in re.split(r"[,;]", tags_raw) if t.strip()]
+
+    return {"tipo": tipo, "descricao": descricao[:100], "tags": tags[:5]}
+
+
+def _validar_resultado(resultado: dict) -> bool:
+    """Verifica se o resultado tem os campos mínimos esperados."""
+    if not isinstance(resultado, dict):
+        return False
+    # Normalizar chave "type" (inglês) para "tipo" (padrão interno)
+    if "type" in resultado and "tipo" not in resultado:
+        resultado["tipo"] = resultado.pop("type")
+    if "description" in resultado and "descricao" not in resultado:
+        resultado["descricao"] = resultado.pop("description")
+    tipo = str(resultado.get("tipo", "")).lower()
+    if tipo in _TIPOS_VALIDOS:
+        resultado["tipo"] = tipo
+        return True
+    return bool(resultado.get("descricao"))
+
+
+# "A razão é, e deve ser apenas, escrava das paixões." — David Hume

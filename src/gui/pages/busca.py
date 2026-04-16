@@ -35,8 +35,13 @@ class CacadaPage(Gtk.Box):
             on_progresso=self._cb_progresso,
             on_concluido=self._cb_concluido,
         )
+        self._cortex_page = None
         self._status_bar: StatusBar | None = None
         self._build_ui()
+
+    def conectar_cortex(self, cortex_page) -> None:
+        """Conecta ao Córtex para início automático do pipeline IA."""
+        self._cortex_page = cortex_page
 
     def conectar_status_bar(self, status_bar: StatusBar) -> None:
         """Conecta a barra de status global para atualizações em tempo real."""
@@ -145,8 +150,8 @@ class CacadaPage(Gtk.Box):
             self._log_terminal.append_line("[AVISO] Insira uma URL antes de iniciar.")
             return
         if not url.startswith(("http://", "https://")):
-            self._log_terminal.append_line("[AVISO] URL deve começar com http:// ou https://")
-            return
+            url = f"https://{url}"
+            self._entry_url.set_text(url)
 
         self._log_terminal.limpar()
         self._progresso.set_fraction(0.0)
@@ -161,6 +166,8 @@ class CacadaPage(Gtk.Box):
         modo_furtivo = self._toggle_furtivo.get_active()
         filas.nova_sessao()
         self._spider.iniciar(url, modo_furtivo=modo_furtivo)
+        if self._cortex_page:
+            self._cortex_page.iniciar_pipeline_automatico()
         if self._status_bar:
             self._status_bar.update(status="ativa", sessao="busca")
         logger.info("Caçada iniciada: %s (furtivo=%s)", url, modo_furtivo)

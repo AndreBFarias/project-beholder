@@ -253,19 +253,74 @@ else
     log "AVISO: repositório git não encontrado — hooks não instalados"
 fi
 
-# Instalar .desktop e ícone
+# Instalar .desktop e ícone em múltiplas resoluções
 DESKTOP_FILE="$HOME/.local/share/applications/com.beholder.app.desktop"
-ICON_DIR="$HOME/.local/share/icons/hicolor/512x512/apps"
-ICON_FILE="$ICON_DIR/com.beholder.app.png"
+ICON_NAME="com.beholder.app"
+ICON_SOURCE="$PROJECT_DIR/beholder-icon.png"
 
 mkdir -p "$(dirname "$DESKTOP_FILE")"
-mkdir -p "$ICON_DIR"
 
-if [ -f "$PROJECT_DIR/beholder-icon.png" ]; then
-    cp "$PROJECT_DIR/beholder-icon.png" "$ICON_FILE"
-    ok "Ícone instalado em $ICON_FILE"
+if [ -f "$ICON_SOURCE" ]; then
+    for SIZE in 48 128 256 512; do
+        ICON_DIR="$HOME/.local/share/icons/hicolor/${SIZE}x${SIZE}/apps"
+        mkdir -p "$ICON_DIR"
+        if "$PYTHON_VENV" -c "from PIL import Image" 2>/dev/null; then
+            "$PYTHON_VENV" -c "
+import sys
+from PIL import Image
+src, dst, sz = sys.argv[1], sys.argv[2], int(sys.argv[3])
+img = Image.open(src)
+img = img.resize((sz, sz), Image.LANCZOS)
+img.save(dst)
+" "$ICON_SOURCE" "$ICON_DIR/${ICON_NAME}.png" "$SIZE"
+        elif command -v convert >/dev/null 2>&1; then
+            convert "$ICON_SOURCE" -resize "${SIZE}x${SIZE}" "$ICON_DIR/${ICON_NAME}.png"
+        elif command -v magick >/dev/null 2>&1; then
+            magick "$ICON_SOURCE" -resize "${SIZE}x${SIZE}" "$ICON_DIR/${ICON_NAME}.png"
+        else
+            cp "$ICON_SOURCE" "$ICON_DIR/${ICON_NAME}.png"
+        fi
+    done
+    ok "Ícone instalado em 48, 128, 256, 512"
 else
     log "AVISO: beholder-icon.png não encontrado — ícone não instalado"
+fi
+
+# Garantir index.theme no hicolor (necessário para gtk-update-icon-cache)
+HICOLOR_DIR="$HOME/.local/share/icons/hicolor"
+if [ ! -f "$HICOLOR_DIR/index.theme" ]; then
+    cat > "$HICOLOR_DIR/index.theme" << 'THEME'
+[Icon Theme]
+Name=Hicolor
+Comment=Fallback Icon Theme
+Hidden=true
+Directories=48x48/apps,128x128/apps,256x256/apps,512x512/apps
+
+[48x48/apps]
+Size=48
+Context=Applications
+Type=Fixed
+
+[128x128/apps]
+Size=128
+Context=Applications
+Type=Fixed
+
+[256x256/apps]
+Size=256
+Context=Applications
+Type=Fixed
+
+[512x512/apps]
+Size=512
+Context=Applications
+Type=Fixed
+THEME
+fi
+
+# Atualizar cache de ícones
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -f "$HICOLOR_DIR" 2>/dev/null || true
 fi
 
 cat > "$DESKTOP_FILE" << 'DESKTOP'
@@ -279,6 +334,7 @@ Icon=com.beholder.app
 Terminal=false
 Categories=Development;Graphics;
 Keywords=design;assets;scraper;vision;
+StartupWMClass=com.beholder.app
 DESKTOP
 
 # Substituir placeholder pelo caminho real

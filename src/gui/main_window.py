@@ -11,9 +11,8 @@ Sempre usar GLib.idle_add(callback, dados).
 """
 
 import logging
-from pathlib import Path
 
-from gi.repository import Adw, GdkPixbuf, Gtk
+from gi.repository import Adw, Gtk
 
 from src.gui.pages.busca import CacadaPage
 from src.gui.pages.cortex import CortexPage
@@ -25,8 +24,6 @@ from src.gui.theme import apply_theme
 from src.gui.widgets import StatusBar
 
 logger = logging.getLogger("beholder.gui.main_window")
-
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 class BeholderWindow(Adw.ApplicationWindow):
@@ -42,27 +39,8 @@ class BeholderWindow(Adw.ApplicationWindow):
         logger.info("Janela principal iniciada")
 
     def _definir_icone(self) -> None:
-        """Define o ícone da janela a partir do beholder-icon.png."""
-        icon_path = _PROJECT_ROOT / "beholder-icon.png"
-        if not icon_path.exists():
-            return
-        try:
-            # Instala no hicolor para que o WM encontre via icon name
-            hicolor_dir = Path.home() / ".local/share/icons/hicolor/512x512/apps"
-            hicolor_dir.mkdir(parents=True, exist_ok=True)
-            dest = hicolor_dir / "com.beholder.app.png"
-            if not dest.exists():
-                import shutil
-
-                shutil.copy2(str(icon_path.resolve()), str(dest))
-            self.set_icon_name("com.beholder.app")
-        except Exception as exc:
-            logger.debug("Falha ao instalar ícone via hicolor: %s", exc)
-            try:
-                GdkPixbuf.Pixbuf.new_from_file(str(icon_path.resolve()))
-                Gtk.Window.set_default_icon_name("beholder-icon")
-            except Exception as exc_inner:
-                logger.debug("Fallback de ícone também falhou: %s", exc_inner)
+        """Define o ícone da janela via icon name (instalado pelo install.sh)."""
+        self.set_icon_name("com.beholder.app")
 
     def _build_ui(self) -> None:
         # Container principal vertical
@@ -92,6 +70,8 @@ class BeholderWindow(Adw.ApplicationWindow):
 
         # Conectar Córtex → Espólio (BUG-05)
         self._paginas["cortex"].conectar_espolio(self._paginas["espolio"])
+        # Conectar Busca → Córtex (pipeline automático)
+        self._paginas["cacada"].conectar_cortex(self._paginas["cortex"])
 
         for modulo_id, pagina in self._paginas.items():
             self._stack.add_named(pagina, modulo_id)
