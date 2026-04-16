@@ -25,6 +25,7 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
+from queue import Empty, Full
 from urllib.parse import urlparse
 
 import requests
@@ -171,7 +172,14 @@ class StealthSpider:
             if modo_furtivo:
                 self._log("[INFO] Modo furtivo ativo — Playwright com evasão de fingerprint.")
                 self._progresso(0.05, "Modo furtivo: iniciando Playwright...")
-                html = self._get_playwright(url)
+                try:
+                    html = self._get_playwright(url)
+                except Exception as exc:
+                    logger.warning("Playwright indisponível (%s) — fallback para requests", exc)
+                    self._log(f"[AVISO] Playwright indisponível: {exc}")
+                    self._log("[INFO] Usando modo normal (requests) como fallback...")
+                    self._progresso(0.05, "Fallback: modo normal...")
+                    html = self._get_com_retry(url)
             else:
                 self._log(f"[INFO] Conectando a {url} ...")
                 self._progresso(0.05, "Baixando página...")
@@ -208,9 +216,13 @@ class StealthSpider:
                 caminho = self._baixar_asset(asset, dir_saida)
                 if caminho:
                     asset.caminho_local = str(caminho)
-                    filas.scraper.put(asset)
-                    total_baixados += 1
-                    self._log(f"[OK] {asset.tipo.upper()} — {asset.url}")
+                    try:
+                        filas.scraper.put(asset, timeout=10.0)
+                        total_baixados += 1
+                        self._log(f"[OK] {asset.tipo.upper()} — {asset.url}")
+                    except Full:
+                        self._log(f"[AVISO] Fila cheia — asset descartado: {asset.url}")
+                        logger.warning("Fila scraper cheia — asset descartado: %s", asset.url)
                 else:
                     self._log(f"[AVISO] Falha ao baixar: {asset.url}")
 
@@ -222,7 +234,16 @@ class StealthSpider:
             logger.exception("Erro inesperado no StealthSpider")
             self._log(f"[ERRO] Exceção inesperada: {exc}")
         finally:
-            filas.scraper.put(SENTINEL)
+            try:
+                filas.scraper.put(SENTINEL, timeout=30.0)
+            except Full:
+                logger.warning("Fila scraper cheia ao enviar SENTINEL — drenando")
+                while not filas.scraper.empty():
+                    try:
+                        filas.scraper.get_nowait()
+                    except Empty:
+                        break
+                filas.scraper.put(SENTINEL)
 
             if self._evento_parar.is_set():
                 texto_final = f"Cancelado — {total_baixados} assets baixados."

@@ -132,6 +132,23 @@ class OllamaLifecycle:
             GLib.idle_add(on_erro, msg)
             return
 
+        if not os.access(binario, os.X_OK):
+            msg = f"Binário sem permissão de execução: {binario}"
+            logger.error(msg)
+            GLib.idle_add(on_erro, msg)
+            return
+
+        # Verificar se a porta já está ocupada por outro processo
+        try:
+            with httpx.Client(timeout=1.0) as client:
+                client.get(f"{BASE_URL}/api/tags")
+            msg = f"Porta {PORTA_OLLAMA} já em uso — outro processo ativo"
+            logger.warning(msg)
+            GLib.idle_add(on_pronto, f"Ollama já respondendo na porta {PORTA_OLLAMA}")
+            return
+        except Exception:
+            pass
+
         env = os.environ.copy()
         env["OLLAMA_HOST"] = f"127.0.0.1:{PORTA_OLLAMA}"
         env["OLLAMA_TMPDIR"] = str(_PROJECT_ROOT / _cfg_ia["ollama_tmpdir"])
@@ -172,7 +189,8 @@ class OllamaLifecycle:
         inicio = time.monotonic()
         while time.monotonic() - inicio < TIMEOUT_STARTUP:
             if not self._rodando():
-                msg = "Ollama encerrou inesperadamente durante inicialização."
+                rc = self._processo.returncode if self._processo else "desconhecido"
+                msg = f"Ollama encerrou durante inicialização (código: {rc})"
                 logger.error(msg)
                 GLib.idle_add(on_erro, msg)
                 return

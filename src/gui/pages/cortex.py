@@ -125,6 +125,26 @@ class CortexPage(Gtk.Box):
         """Conecta o Córtex ao Espólio para alimentar contadores de exportação."""
         self._espolio = espolio_page
 
+    def iniciar_pipeline_automatico(self) -> None:
+        """Inicia Ollama + Orchestrator programaticamente (chamado pela Busca)."""
+        if self._orchestrator.esta_ativo():
+            logger.info("Pipeline já ativo — ignorando início automático")
+            return
+        if self._lifecycle.esta_ativo():
+            self._orchestrator.iniciar()
+            self._btn_pausar_ia.set_sensitive(True)
+            self._btn_expurgar.set_sensitive(True)
+            self._set_status("ativo", css="status-dot-concluido")
+            logger.info("Pipeline automático: Orchestrator iniciado (Ollama já ativo)")
+            return
+        self._btn_analisar.set_sensitive(False)
+        self._set_status("iniciando...", css="status-dot-ativo")
+        self._lifecycle.subir(
+            on_pronto=self._cb_ollama_pronto,
+            on_erro=self._cb_ollama_erro,
+        )
+        logger.info("Pipeline automático solicitado pela Busca")
+
     def _build_ui(self) -> None:
         # Título
         titulo = Gtk.Label(label="Córtex")
