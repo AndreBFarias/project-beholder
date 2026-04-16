@@ -5,6 +5,24 @@ Todas as alterações relevantes do projeto estão documentadas aqui.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.2.0] - 2026-04-15
+
+### Corrigido
+- Pipeline automatico: Busca aciona Cortex (Ollama + Orchestrator) sem navegacao manual
+- Travamento com 50+ imagens: filas com timeout e tratamento de backpressure
+- Playwright: pre-flight no run.sh + fallback para requests quando browsers ausentes
+- Ollama: verificacao de permissao, porta ocupada e returncode na inicializacao
+- Icone desktop: multi-resolucao, StartupWMClass, GLib.set_prgname para WM_CLASS
+- URL auto-prepend https:// quando usuario omite protocolo
+
+### Melhorado
+- Prompt de analise IA: formato chave-valor simples com parser multi-formato e retry
+- Validacao e normalizacao de respostas do modelo (aceita type/tipo, description/descricao)
+- install.sh gera index.theme e atualiza gtk-update-icon-cache
+- Mensagens de erro mais claras no ciclo de vida do Ollama
+
+---
+
 ## [0.1.1] - 2026-04-15
 
 ### Adicionado
