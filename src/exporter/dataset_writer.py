@@ -2,7 +2,8 @@
 Dataset Writer — escreve CSV de metadados de assets processados.
 
 Colunas: url_original, caminho_local, tipo, descricao, tags, paleta_hex, timestamp.
-ADR-02: colunas lidas de DEFAULTS["Saida"]["colunas_csv"].
+ADR-02: colunas e mapa de pastas lidos dinamicamente de DEFAULTS a cada chamada
+(mudanças em Grimório propagam sem reiniciar a aplicação).
 """
 
 import csv
@@ -14,24 +15,21 @@ from src.core.config.defaults import DEFAULTS
 
 logger = logging.getLogger("beholder.exporter.dataset_writer")
 
-_COLUNAS = DEFAULTS["Saida"]["colunas_csv"].split(",")
 
-# Mapeamento de tipo de asset para subpasta no .zip
-_MAPA_TIPO: dict[str, str] = {
-    "icon": "icons",
-    "logo": "icons",
-    "svg": "icons",
-    "vector": "icons",
-    "background": "backgrounds",
-    "photo": "backgrounds",
-    "ui_element": "outros",
-    "other": "outros",
-}
+def _colunas() -> list[str]:
+    return DEFAULTS["Saida"]["colunas_csv"].split(",")
 
 
 def subpasta_tipo(tipo: str) -> str:
-    """Retorna o nome da subpasta (icons/backgrounds/outros) para o tipo dado."""
-    return _MAPA_TIPO.get(tipo.lower(), "outros")
+    """Retorna o nome da subpasta em PT-BR (ícones/fundos/outros) para o tipo dado.
+
+    Lê `DEFAULTS["Espolio"]["mapa_pastas"]` dinamicamente — mudanças em
+    Grimório propagam sem reiniciar.
+    """
+    cfg = DEFAULTS["Espolio"]
+    mapa = cfg["mapa_pastas"]
+    fallback = cfg["pasta_fallback"]
+    return mapa.get(tipo.lower(), fallback)
 
 
 def escrever_csv(assets: list[AssetProcessado], destino: str | Path) -> Path:
@@ -49,7 +47,7 @@ def escrever_csv(assets: list[AssetProcessado], destino: str | Path) -> Path:
     destino.parent.mkdir(parents=True, exist_ok=True)
 
     with destino.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=_COLUNAS)
+        writer = csv.DictWriter(f, fieldnames=_colunas())
         writer.writeheader()
         for asset in assets:
             writer.writerow(
@@ -61,6 +59,7 @@ def escrever_csv(assets: list[AssetProcessado], destino: str | Path) -> Path:
                     "tags": "|".join(asset.tags),
                     "paleta_hex": "|".join(asset.paleta_hex),
                     "timestamp": asset.timestamp,
+                    "site_origem": asset.site_origem,
                 }
             )
 

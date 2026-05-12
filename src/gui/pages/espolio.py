@@ -15,7 +15,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 
 from src.core.asset_queue import AssetProcessado, filas
 from src.core.config.defaults import DEFAULTS
@@ -26,8 +26,113 @@ from src.gui.widgets import LogTerminal, StatusBar
 logger = logging.getLogger("beholder.gui.espolio")
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-_DIR_OUTPUT = _PROJECT_ROOT / DEFAULTS["Saida"]["diretorio_output"]
-_DIR_DATA = _PROJECT_ROOT / DEFAULTS["Saida"]["diretorio_data"]
+
+
+def _dir_output() -> Path:
+    """Diretório de saída lido dinamicamente de DEFAULTS (ADR-02)."""
+    return _PROJECT_ROOT / DEFAULTS["Saida"]["diretorio_output"]
+
+
+def _dir_data() -> Path:
+    """Diretório da sessão lido dinamicamente de DEFAULTS (ADR-02)."""
+    return _PROJECT_ROOT / DEFAULTS["Saida"]["diretorio_data"]
+
+
+def _criar_thumb(caminho: str) -> Gtk.Widget:
+    """Cria thumb de 72x72 a partir do arquivo local, ou placeholder em caso de falha."""
+    TAMANHO = 72
+    if caminho:
+        try:
+            p = Path(caminho)
+            if p.exists() and p.is_file():
+                pic = Gtk.Picture.new_for_filename(str(p))
+                pic.set_size_request(TAMANHO, TAMANHO)
+                pic.set_content_fit(Gtk.ContentFit.CONTAIN)
+                pic.set_can_shrink(True)
+                return pic
+        except Exception as exc:
+            logger.debug("Thumb falhou para %s: %s", caminho, exc)
+
+    placeholder = Gtk.Label(label="◈")
+    placeholder.set_size_request(TAMANHO, TAMANHO)
+    placeholder.add_css_class("section-title")
+    return placeholder
+
+
+def _criar_card_asset_espolio(asset: AssetProcessado) -> Gtk.ListBoxRow:
+    """Cria linha com thumb, descrição completa, tags como chips e metadados."""
+    row = Gtk.ListBoxRow()
+    row.set_selectable(False)
+
+    linha_topo = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+    linha_topo.set_margin_top(10)
+    linha_topo.set_margin_bottom(10)
+    linha_topo.set_margin_start(12)
+    linha_topo.set_margin_end(12)
+
+    # Thumb à esquerda
+    thumb = _criar_thumb(asset.caminho_local)
+    thumb.set_valign(Gtk.Align.START)
+    linha_topo.append(thumb)
+
+    # Caixa de texto à direita da thumb
+    caixa = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    caixa.set_hexpand(True)
+
+    # Linha 1: badges (tipo + site_origem) + nome do arquivo
+    cabecalho = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    badge_tipo = Gtk.Label(label=f"[{asset.tipo.upper()}]")
+    badge_tipo.add_css_class("sidebar-module-name")
+    badge_tipo.set_xalign(0)
+
+    badge_site = Gtk.Label(label=f"@{asset.site_origem or 'generic'}")
+    badge_site.add_css_class("section-title")
+    badge_site.set_xalign(0)
+
+    nome_arquivo = Path(asset.caminho_local).name if asset.caminho_local else asset.url_original
+    lbl_nome = Gtk.Label(label=nome_arquivo)
+    lbl_nome.add_css_class("section-title")
+    lbl_nome.set_xalign(0)
+    lbl_nome.set_hexpand(True)
+    lbl_nome.set_ellipsize(Pango.EllipsizeMode.MIDDLE)
+
+    cabecalho.append(badge_tipo)
+    cabecalho.append(badge_site)
+    cabecalho.append(lbl_nome)
+    caixa.append(cabecalho)
+
+    # Linha 2: descrição completa (com wrap)
+    desc_texto = asset.descricao.strip() if asset.descricao else "(sem descrição)"
+    lbl_desc = Gtk.Label(label=desc_texto)
+    lbl_desc.set_xalign(0)
+    lbl_desc.set_wrap(True)
+    lbl_desc.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+    lbl_desc.set_max_width_chars(80)
+    caixa.append(lbl_desc)
+
+    # Linha 3: tags como chips
+    if asset.tags:
+        tags_box = Gtk.FlowBox()
+        tags_box.set_selection_mode(Gtk.SelectionMode.NONE)
+        tags_box.set_max_children_per_line(10)
+        tags_box.set_row_spacing(4)
+        tags_box.set_column_spacing(4)
+        for tag in asset.tags:
+            chip = Gtk.Label(label=f"#{tag}")
+            chip.add_css_class("sidebar-module-desc")
+            chip.set_margin_start(4)
+            chip.set_margin_end(4)
+            tags_box.append(chip)
+        caixa.append(tags_box)
+    else:
+        lbl_sem_tags = Gtk.Label(label="(sem tags)")
+        lbl_sem_tags.add_css_class("sidebar-module-desc")
+        lbl_sem_tags.set_xalign(0)
+        caixa.append(lbl_sem_tags)
+
+    linha_topo.append(caixa)
+    row.set_child(linha_topo)
+    return row
 
 
 class EspolioPage(Gtk.Box):
@@ -137,6 +242,34 @@ class EspolioPage(Gtk.Box):
         acoes_frame.set_child(acoes_box)
         self.append(acoes_frame)
 
+        # Lista de assets processados (descrição + tags)
+        assets_frame = Gtk.Frame(label="Assets Processados")
+        assets_scroll = Gtk.ScrolledWindow()
+        assets_scroll.set_vexpand(True)
+        assets_scroll.set_min_content_height(220)
+        assets_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+
+        self._listbox_assets = Gtk.ListBox()
+        self._listbox_assets.add_css_class("nav-listbox")
+        self._listbox_assets.set_selection_mode(Gtk.SelectionMode.NONE)
+
+        self._row_placeholder_assets = Gtk.ListBoxRow()
+        self._row_placeholder_assets.set_selectable(False)
+        lbl_sem_assets = Gtk.Label(
+            label="Nenhum asset processado ainda.\nAnalise imagens no Córtex para ver descrições e tags aqui."
+        )
+        lbl_sem_assets.set_justify(Gtk.Justification.CENTER)
+        lbl_sem_assets.add_css_class("section-title")
+        lbl_sem_assets.set_vexpand(True)
+        lbl_sem_assets.set_valign(Gtk.Align.CENTER)
+        lbl_sem_assets.set_margin_top(20)
+        self._row_placeholder_assets.set_child(lbl_sem_assets)
+        self._listbox_assets.append(self._row_placeholder_assets)
+
+        assets_scroll.set_child(self._listbox_assets)
+        assets_frame.set_child(assets_scroll)
+        self.append(assets_frame)
+
         # Log de operações
         log_frame = Gtk.Frame(label="Log")
         self._log_terminal = LogTerminal()
@@ -178,6 +311,11 @@ class EspolioPage(Gtk.Box):
         self._assets.append(asset)
         self._atualizar_contadores()
 
+        if self._row_placeholder_assets is not None:
+            self._listbox_assets.remove(self._row_placeholder_assets)
+            self._row_placeholder_assets = None
+        self._listbox_assets.prepend(_criar_card_asset_espolio(asset))
+
     # ------------------------------------------------------------------
     # Handlers de botão
     # ------------------------------------------------------------------
@@ -210,9 +348,10 @@ class EspolioPage(Gtk.Box):
 
     def _on_abrir_pasta(self, _btn: Gtk.Button) -> None:
         """Abre o diretório output/ com xdg-open."""
-        _DIR_OUTPUT.mkdir(parents=True, exist_ok=True)
+        destino = _dir_output()
+        destino.mkdir(parents=True, exist_ok=True)
         try:
-            subprocess.Popen(["xdg-open", str(_DIR_OUTPUT)], start_new_session=True)
+            subprocess.Popen(["xdg-open", str(destino)], start_new_session=True)
         except OSError as exc:
             logger.error("Falha ao abrir pasta: %s", exc)
             self._cb_log(f"[ERRO] Não foi possível abrir a pasta: {exc}")
@@ -274,11 +413,16 @@ class EspolioPage(Gtk.Box):
         dialogo.destroy()
         if resposta == Gtk.ResponseType.YES:
             try:
-                if _DIR_DATA.exists():
-                    shutil.rmtree(_DIR_DATA)
-                    _DIR_DATA.mkdir(parents=True, exist_ok=True)
+                pasta_dados = _dir_data()
+                if pasta_dados.exists():
+                    shutil.rmtree(pasta_dados)
+                    pasta_dados.mkdir(parents=True, exist_ok=True)
                 self._assets.clear()
+                self._ultimo_zip = ""
                 self._atualizar_contadores()
+                self._limpar_lista_assets()
+                self._limpar_historico_pacotes()
+                self._log_terminal.limpar()
                 self._cb_log("[INFO] Sessão limpa.")
                 logger.info("Sessão limpa pelo usuário")
             except OSError as exc:
@@ -304,6 +448,45 @@ class EspolioPage(Gtk.Box):
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    def _limpar_historico_pacotes(self) -> None:
+        """Remove todas as linhas do histórico de pacotes e restaura placeholder."""
+        filho = self._listbox_pacotes.get_first_child()
+        while filho is not None:
+            proximo = filho.get_next_sibling()
+            self._listbox_pacotes.remove(filho)
+            filho = proximo
+
+        self._row_placeholder_hist = Gtk.ListBoxRow()
+        self._row_placeholder_hist.set_selectable(False)
+        lbl_vazio = Gtk.Label(label="Nenhum pacote gerado nesta sessão.")
+        lbl_vazio.add_css_class("section-title")
+        lbl_vazio.set_vexpand(True)
+        lbl_vazio.set_valign(Gtk.Align.CENTER)
+        lbl_vazio.set_margin_top(12)
+        self._row_placeholder_hist.set_child(lbl_vazio)
+        self._listbox_pacotes.append(self._row_placeholder_hist)
+
+    def _limpar_lista_assets(self) -> None:
+        """Remove todos os cards do ListBox de assets e restaura placeholder."""
+        filho = self._listbox_assets.get_first_child()
+        while filho is not None:
+            proximo = filho.get_next_sibling()
+            self._listbox_assets.remove(filho)
+            filho = proximo
+
+        self._row_placeholder_assets = Gtk.ListBoxRow()
+        self._row_placeholder_assets.set_selectable(False)
+        lbl = Gtk.Label(
+            label="Nenhum asset processado ainda.\nAnalise imagens no Córtex para ver descrições e tags aqui."
+        )
+        lbl.set_justify(Gtk.Justification.CENTER)
+        lbl.add_css_class("section-title")
+        lbl.set_vexpand(True)
+        lbl.set_valign(Gtk.Align.CENTER)
+        lbl.set_margin_top(20)
+        self._row_placeholder_assets.set_child(lbl)
+        self._listbox_assets.append(self._row_placeholder_assets)
 
     def _atualizar_contadores(self) -> None:
         icons = sum(1 for a in self._assets if a.tipo in {"icon", "logo", "svg", "vector"})

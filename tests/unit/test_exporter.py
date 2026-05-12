@@ -71,6 +71,7 @@ def test_escrever_csv_cabecalho_correto(tmp_path, asset_simples):
             "tags",
             "paleta_hex",
             "timestamp",
+            "site_origem",
         }
 
 
@@ -147,18 +148,28 @@ def test_ler_csv_roundtrip(tmp_path, asset_simples):
 @pytest.mark.parametrize(
     ("tipo", "esperado"),
     [
-        ("icon", "icons"),
-        ("logo", "icons"),
-        ("svg", "icons"),
-        ("vector", "icons"),
-        ("background", "backgrounds"),
-        ("photo", "backgrounds"),
+        ("icon", "ícones"),
+        ("logo", "ícones"),
+        ("svg", "ícones"),
+        ("vector", "ícones"),
+        ("background", "fundos"),
+        ("photo", "fundos"),
         ("ui_element", "outros"),
         ("other", "outros"),
         ("desconhecido", "outros"),
-        ("ICON", "icons"),  # case-insensitive
-        ("BACKGROUND", "backgrounds"),
+        ("ICON", "ícones"),  # case-insensitive
+        ("BACKGROUND", "fundos"),
     ],
 )
-def test_subpasta_mapeamento(tipo, esperado):
+def test_subpasta_mapeamento_ptbr(tipo, esperado):
+    """Subpastas do ZIP devem estar em PT-BR com acentuação (GUIDE.md)."""
     assert subpasta_tipo(tipo) == esperado
+
+
+def test_subpasta_nunca_usa_ingles():
+    """Garante que nenhum tipo conhecido retorna nome de pasta em inglês."""
+    proibidos = {"icons", "backgrounds"}
+    for tipo in ("icon", "logo", "svg", "vector", "background", "photo", "ui_element", "other"):
+        assert subpasta_tipo(tipo) not in proibidos, (
+            f"subpasta_tipo({tipo!r}) retornou nome em inglês"
+        )

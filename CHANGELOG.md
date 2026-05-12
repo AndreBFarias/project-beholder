@@ -52,7 +52,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - Install.sh com download automático do Ollama
 - CI com 4 estágios (lint, smoke, unit, anonimato)
 - Testes smoke e unitários (14 testes)
-- Documentação completa (CLAUDE.md, GSD.md, ADRs)
+- Documentação completa (GUIDE.md, GSD.md, ADRs)
 - Justfile como task runner
 
 ---

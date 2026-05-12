@@ -228,7 +228,7 @@ project_beholder/
 │   └── workflows/
 │       └── ci.yml
 ├── .pre-commit-config.yaml
-├── CLAUDE.md
+├── GUIDE.md
 ├── GSD.md
 ├── Justfile
 ├── pyproject.toml
@@ -242,7 +242,7 @@ project_beholder/
 
 ## Sprint Roadmap
 
-> **Regra para modelos executores:** Cada sprint é atômica e autocontida. Leia o CLAUDE.md e o GSD.md antes de qualquer sprint. Execute `just ci-local` ao finalizar. Zero ambiguidade — se algo não estiver especificado, consulte o spec antes de inventar.
+> **Regra para modelos executores:** Cada sprint é atômica e autocontida. Leia o GUIDE.md e o GSD.md antes de qualquer sprint. Execute `just ci-local` ao finalizar. Zero ambiguidade — se algo não estiver especificado, consulte o spec antes de inventar.
 
 ---
 
@@ -257,7 +257,7 @@ Criar todos os diretórios listados na seção "Estrutura de Diretórios Final".
 Criar `__init__.py` vazios em: `src/`, `src/gui/`, `src/gui/pages/`, `src/scraper/`, `src/ai_vision/`, `src/transformer/`, `src/exporter/`, `src/core/`, `src/core/config/`, `tests/`, `tests/smoke/`, `tests/unit/`.
 
 **0.2 — `.gitignore`**
-Conteúdo exato (da CLAUDE.md global):
+Conteúdo exato (da GUIDE.md global):
 ```gitignore
 __pycache__/
 *.py[cod]
@@ -344,9 +344,9 @@ ruff>=0.3.0
 pre-commit>=3.5.0
 ```
 
-**0.5 — `CLAUDE.md`** (raiz do projeto)
+**0.5 — `GUIDE.md`** (raiz do projeto)
 ```markdown
-# CLAUDE.md — Project Beholder
+# GUIDE.md — Project Beholder
 Leitura obrigatória antes de qualquer sprint.
 
 ## Regras Invioláveis
@@ -382,7 +382,7 @@ Toda comunicação com Ollama passa por src/ai_vision/orchestrator.py.
 Nunca chame a API do Ollama diretamente de fora do orchestrator.
 
 ## Workflow Obrigatório
-1. Ler CLAUDE.md + GSD.md antes de começar
+1. Ler GUIDE.md + GSD.md antes de começar
 2. Implementar mantendo compatibilidade
 3. Testar incrementalmente
 4. just ci-local antes de commitar
@@ -447,7 +447,7 @@ Criar diretório se não existir: `path.parent.mkdir(parents=True, exist_ok=True
 
 ### Pré-Sprint
 - [ ] Ler sprint anterior (se existir)
-- [ ] Ler CLAUDE.md
+- [ ] Ler GUIDE.md
 - [ ] just doctor (verifica dependências)
 
 ### Pré-Commit
@@ -1566,7 +1566,7 @@ just ci-local
 | `src/ai_vision/ollama_lifecycle.py` | 5 | Gestão de VRAM (ADR-03) |
 | `src/transformer/icon_alchemist.py` | 6 | K-Means + exportação circular |
 | `src/core/checkpoint.py` | 8 | Retomada de sessão |
-| `CLAUDE.md` | 0 | Regras invioláveis |
+| `GUIDE.md` | 0 | Regras invioláveis |
 | `GSD.md` | 0 | Armadilhas críticas |
 
 ---

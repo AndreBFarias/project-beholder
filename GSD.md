@@ -104,7 +104,7 @@ filas.scraper.put(SENTINEL)  # Thread B para quando recebe SENTINEL
 
 | Sprint | Status | Descrição |
 |--------|--------|-----------|
-| 0 | COMPLETA | Infra: dirs, hooks, pyproject.toml, CLAUDE.md, ADRs |
+| 0 | COMPLETA | Infra: dirs, hooks, pyproject.toml, GUIDE.md, ADRs |
 | 1 | COMPLETA | UI Shell: GTK4 + tema Dracula |
 | 2 | COMPLETA | Config + Logging |
 | 3 | COMPLETA | Scraper básico (requests) |
@@ -210,7 +210,7 @@ Builds automáticos via `.github/workflows/release.yml` ao criar tag `v*`.
 
 ### Pré-Sprint
 - [ ] Ler sprint anterior (se existir)
-- [ ] Ler CLAUDE.md
+- [ ] Ler GUIDE.md
 - [ ] just doctor (verifica dependências)
 
 ### Pré-Commit

@@ -20,6 +20,7 @@ from gi.repository import GLib, Gtk
 
 from src.core import checkpoint as ckpt
 from src.core.checkpoint import EstadoCheckpoint
+from src.core.config.defaults import DEFAULTS
 from src.gui.widgets import StatusBar
 from src.scraper.stealth_spider import StealthSpider
 
@@ -330,7 +331,8 @@ class ProtocoloPage(Gtk.Box):
             )
             try:
                 spider.iniciar(url, modo_furtivo=modo_furtivo)
-                terminado = concluido_evt.wait(timeout=300)  # máx 5 min por URL
+                timeout_url = DEFAULTS["Protocolo"]["timeout_url"]
+                terminado = concluido_evt.wait(timeout=timeout_url)
                 if not terminado:
                     status_final[0] = "erro"
                     spider.cancelar()

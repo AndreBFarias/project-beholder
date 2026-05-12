@@ -8,10 +8,12 @@ ADR-01: Este é o ÚNICO módulo que invoca moondream_prompt.analisar_imagem().
 Toda comunicação com Ollama passa aqui — nunca de fora deste módulo.
 """
 
+import csv
 import logging
 import threading
 from collections.abc import Callable
 from datetime import datetime, timezone
+from pathlib import Path
 from queue import Empty, Full
 
 from gi.repository import GLib
@@ -19,7 +21,10 @@ from gi.repository import GLib
 from src.ai_vision.moondream_prompt import analisar_imagem
 from src.core.asset_queue import SENTINEL, AssetBruto, AssetProcessado, filas
 from src.core.config.defaults import DEFAULTS
+from src.scraper.site_registry import resolver_strategy
 from src.transformer.icon_alchemist import extrair_paleta
+
+_SUFIXOS_IMAGEM = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg")
 
 logger = logging.getLogger("beholder.ai_vision.orchestrator")
 
@@ -59,20 +64,117 @@ class Orchestrator:
     # API pública
     # ------------------------------------------------------------------
 
-    def iniciar(self) -> None:
-        """Inicia Thread B. Ignorado se já em execução."""
+    def iniciar(self, pausado: bool = False) -> None:
+        """Inicia Thread B. Ignorado se já em execução.
+
+        Args:
+            pausado: se True, thread arranca em estado pausado (bloqueada no
+                `_evento_pausar.wait()`). Chamar `retomar()` para liberar.
+                Use em cenários com Ollama subindo assincronamente para evitar
+                consumo prematuro de SENTINEL (race condition Busca→Cortex).
+        """
         if self._thread and self._thread.is_alive():
             logger.warning("Orchestrator já em execução — ignorando iniciar()")
             return
+        # Recarrega config de DEFAULTS (ADR-02)
+        self._kmeans_cores = DEFAULTS["Saida"]["kmeans_cores"]
         self._evento_parar.clear()
-        self._evento_pausar.set()
+        if pausado:
+            self._evento_pausar.clear()
+        else:
+            self._evento_pausar.set()
         self._thread = threading.Thread(
             target=self._executar,
             daemon=True,
             name="beholder-orchestrator",
         )
         self._thread.start()
-        logger.info("Orchestrator iniciado")
+        logger.info("Orchestrator iniciado (pausado=%s)", pausado)
+
+    def analisar_pasta_local(
+        self,
+        diretorio: str | Path,
+        sufixos: tuple[str, ...] = _SUFIXOS_IMAGEM,
+    ) -> int:
+        """Varre diretório local e injeta assets já baixados na fila.
+
+        Permite reanalisar imagens sem precisar rescrapar o site.
+        Não chama `filas.nova_sessao()` — assume que o chamador quer injetar
+        num estado de fila limpa ou complementar assets já existentes.
+
+        Args:
+            diretorio: pasta a varrer (não recursivo por padrão de `Path.iterdir`).
+            sufixos: extensões aceitas (tuple lowercase com ponto).
+
+        Returns:
+            Quantidade de assets enfileirados.
+        """
+        diretorio = Path(diretorio)
+        if not diretorio.exists() or not diretorio.is_dir():
+            self._log(f"[ERRO] Diretório inexistente: {diretorio}")
+            logger.error("analisar_pasta_local: diretório inválido %s", diretorio)
+            return 0
+
+        mapa_sites = self._construir_mapa_sites(diretorio)
+        if mapa_sites:
+            self._log(f"[INFO] {len(mapa_sites)} arquivos com site_origem recuperado de CSVs antigos")
+
+        enfileirados = 0
+        recuperados_csv = 0
+        recuperados_subpasta = 0
+        for arquivo in sorted(diretorio.rglob("*")):
+            if not arquivo.is_file():
+                continue
+            if arquivo.suffix.lower() not in sufixos:
+                continue
+
+            # Prioridade 1: CSV antigo
+            try:
+                chave = str(arquivo.resolve())
+            except OSError:
+                chave = str(arquivo)
+            site_hint = mapa_sites.get(chave)
+            if site_hint:
+                recuperados_csv += 1
+            else:
+                # Prioridade 2: nome da subpasta imediata
+                try:
+                    relativo = arquivo.relative_to(diretorio)
+                    if len(relativo.parts) > 1:
+                        site_hint = relativo.parts[0]
+                        recuperados_subpasta += 1
+                except ValueError:
+                    pass
+
+            asset = AssetBruto(
+                url=arquivo.as_uri(),
+                caminho_local=str(arquivo),
+                tipo="image",
+                origem="local",
+                site_origem_hint=site_hint,
+            )
+            try:
+                filas.scraper.put(asset, timeout=5.0)
+                enfileirados += 1
+            except Full:
+                self._log(f"[AVISO] Fila cheia — arquivo ignorado: {arquivo.name}")
+                logger.warning("Fila scraper cheia ao enfileirar %s", arquivo)
+                break
+
+        if recuperados_csv or recuperados_subpasta:
+            self._log(
+                f"[INFO] site_origem recuperado: {recuperados_csv} via CSV, "
+                f"{recuperados_subpasta} via subpasta"
+            )
+
+        try:
+            filas.scraper.put(SENTINEL, timeout=5.0)
+        except Full:
+            logger.warning("Fila cheia ao enviar SENTINEL de pasta local")
+
+        self._log(f"[INFO] Modo pasta local: {enfileirados} arquivos enfileirados de {diretorio}")
+        logger.info("analisar_pasta_local: %d assets enfileirados de %s", enfileirados, diretorio)
+        return enfileirados
 
     def pausar(self) -> None:
         """Pausa o processamento entre assets."""
@@ -115,7 +217,14 @@ class Orchestrator:
                     continue
 
                 if item is SENTINEL:
-                    logger.info("Orchestrator recebeu SENTINEL — encerrando")
+                    if total == 0:
+                        self._log(
+                            "[AVISO] Nenhum asset para analisar — a fila estava vazia. "
+                            "Use a Busca para baixar imagens ou clique em ANALISAR PASTA."
+                        )
+                        logger.warning("Orchestrator encerrou sem processar assets (fila vazia)")
+                    else:
+                        logger.info("Orchestrator recebeu SENTINEL — encerrando (%d analisados)", total)
                     break
 
                 asset_bruto: AssetBruto = item
@@ -134,6 +243,11 @@ class Orchestrator:
                 except Exception as exc:
                     logger.warning("K-Means falhou para %s: %s", asset_bruto.caminho_local, exc)
 
+                # Sprint 21: hint explícito tem prioridade sobre resolução por URL.
+                site_origem = (
+                    asset_bruto.site_origem_hint
+                    or resolver_strategy(asset_bruto.origem).nome
+                )
                 processado = AssetProcessado(
                     url_original=asset_bruto.url,
                     caminho_local=asset_bruto.caminho_local,
@@ -142,6 +256,7 @@ class Orchestrator:
                     tags=analise.get("tags", []),
                     paleta_hex=paleta,
                     timestamp=datetime.now(timezone.utc).isoformat(),
+                    site_origem=site_origem,
                 )
 
                 try:
@@ -172,6 +287,58 @@ class Orchestrator:
                 filas.processada.put(SENTINEL)
             self._log(f"[INFO] Orquestrador encerrado — {total} assets analisados.")
             GLib.idle_add(self._on_concluido, total)
+
+    # ------------------------------------------------------------------
+    # Helpers internos
+    # ------------------------------------------------------------------
+
+    def _construir_mapa_sites(self, diretorio: Path) -> dict[str, str]:
+        """Mapeia caminho_local absoluto → site_origem a partir de CSVs antigos.
+
+        Fontes (Sprint 21):
+        1. CSVs dentro de `diretorio` (qualquer nível) — ex: exportações manuais.
+        2. CSVs em `{PROJECT_ROOT}/{DEFAULTS.Saida.diretorio_output}` — cópias
+           geradas pelo Packer fora do ZIP.
+        Ignora site_origem == "generic" (não carrega informação útil).
+        """
+        project_root = Path(__file__).resolve().parent.parent.parent
+        output_dir = project_root / DEFAULTS["Saida"]["diretorio_output"]
+
+        candidatos: list[Path] = []
+        for padrao in ("*.csv",):
+            try:
+                candidatos.extend(diretorio.rglob(padrao))
+            except OSError:
+                pass
+            if output_dir.exists():
+                try:
+                    candidatos.extend(output_dir.glob(padrao))
+                except OSError:
+                    pass
+
+        mapa: dict[str, str] = {}
+        for csv_path in candidatos:
+            try:
+                with csv_path.open(encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    if not reader.fieldnames or "caminho_local" not in reader.fieldnames:
+                        continue
+                    for linha in reader:
+                        caminho = (linha.get("caminho_local") or "").strip()
+                        site = (linha.get("site_origem") or "").strip()
+                        if not caminho or not site or site == "generic":
+                            continue
+                        p = Path(caminho)
+                        if not p.is_absolute():
+                            p = project_root / caminho
+                        try:
+                            chave = str(p.resolve())
+                        except OSError:
+                            continue
+                        mapa.setdefault(chave, site)
+            except (OSError, csv.Error) as exc:
+                logger.debug("Ignorando CSV %s: %s", csv_path, exc)
+        return mapa
 
     # ------------------------------------------------------------------
     # Helpers GLib.idle_add (ADR-01)

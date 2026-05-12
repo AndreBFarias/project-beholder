@@ -33,7 +33,7 @@ from gi.repository import GLib
 
 from src.core.asset_queue import SENTINEL, AssetBruto, filas
 from src.core.config.defaults import DEFAULTS
-from src.scraper.html_parser import extrair_assets
+from src.scraper.site_registry import resolver_strategy
 
 logger = logging.getLogger("beholder.scraper.stealth_spider")
 
@@ -119,6 +119,16 @@ class StealthSpider:
             logger.warning("Spider já em execução — ignorando iniciar()")
             return
 
+        # Recarrega config de DEFAULTS (ADR-02): mudanças em Grimório passam a
+        # valer na próxima execução sem precisar reiniciar a aplicação.
+        cfg = DEFAULTS["Scraper"]
+        self._timeout = cfg["timeout"]
+        self._delay_min = cfg["delay_min"]
+        self._delay_max = cfg["delay_max"]
+        self._max_retries = cfg["max_retries"]
+        self._user_agent = cfg["user_agent"]
+        self._session.headers.update({"User-Agent": self._user_agent})
+
         self._evento_parar.clear()
         self._evento_pausar.set()
 
@@ -193,7 +203,9 @@ class StealthSpider:
             self._log(f"[OK] Página baixada ({len(html)} bytes)")
             self._progresso(0.1, "Analisando HTML...")
 
-            assets = extrair_assets(html, url)
+            strategy = resolver_strategy(url)
+            self._log(f"[INFO] Estratégia: {strategy.nome}")
+            assets = strategy.extrair_assets(html, url)
             total = len(assets)
             self._log(f"[INFO] {total} assets encontrados.")
 

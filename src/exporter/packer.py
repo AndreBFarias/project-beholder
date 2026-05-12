@@ -2,7 +2,8 @@
 Packer — Thread C do pipeline produtor-consumidor.
 
 Consome AssetProcessado de filas.processada, organiza em subpastas por tipo
-(icons/, backgrounds/, outros/) e compacta em output/beholder_{timestamp}.zip.
+(ícones/, fundos/, outros/) e compacta em output/beholder_{timestamp}.zip.
+Nomes das subpastas lidos de DEFAULTS["Espolio"]["mapa_pastas"] (PT-BR).
 
 ADR-01: callbacks de UI sempre via GLib.idle_add.
 """
@@ -98,11 +99,12 @@ class Packer:
                 assets.append(asset)
                 self._log(f"[INFO] Empacotando: {Path(asset.caminho_local).name}")
 
-                # Copia arquivo para subpasta organizada
+                # Copia arquivo para subpasta organizada (layout híbrido: categoria/site/).
                 if asset.caminho_local:
                     src = Path(asset.caminho_local)
                     if src.exists():
-                        pasta = staging / subpasta_tipo(asset.tipo)
+                        site_slug = (asset.site_origem or "generic").strip() or "generic"
+                        pasta = staging / subpasta_tipo(asset.tipo) / site_slug
                         pasta.mkdir(parents=True, exist_ok=True)
                         destino = pasta / src.name
                         # Evita colisão de nomes
@@ -128,8 +130,20 @@ class Packer:
                     if arquivo.is_file():
                         zf.write(arquivo, arquivo.relative_to(staging))
 
+            # Sprint 21: cópia do CSV fora do ZIP para recuperação de site_origem
+            # em reanálises futuras via "ANALISAR PASTA".
+            try:
+                csv_final = self._dir_output / f"metadata_{timestamp}.csv"
+                shutil.copy2(csv_path, csv_final)
+                logger.info("CSV de metadados preservado em %s", csv_final)
+            except OSError as exc:
+                logger.warning("Falha ao preservar cópia do CSV fora do ZIP: %s", exc)
+
             # Remove staging temporário
             shutil.rmtree(staging, ignore_errors=True)
+
+            # Sprint 22: retenção automática de outputs antigos
+            self._podar_outputs_antigos()
 
             self._log(f"[OK] Pacote gerado: {zip_path} ({len(assets)} assets)")
             GLib.idle_add(self._on_concluido, str(zip_path))
@@ -139,6 +153,31 @@ class Packer:
             self._log(f"[ERRO] {exc}")
             shutil.rmtree(staging, ignore_errors=True)
             GLib.idle_add(self._on_concluido, "")
+
+    def _podar_outputs_antigos(self) -> None:
+        """Mantém apenas os N mais recentes de cada tipo em output/ (Sprint 22).
+
+        N lido de `DEFAULTS["Saida"]["max_pacotes_retidos"]`. Valor 0 desativa.
+        Poda independente para ZIPs e CSVs preservados.
+        """
+        max_retidos = DEFAULTS["Saida"].get("max_pacotes_retidos", 0)
+        if max_retidos <= 0:
+            return
+        if not self._dir_output.exists():
+            return
+
+        for padrao in ("beholder_*.zip", "metadata_*.csv"):
+            arquivos = sorted(
+                self._dir_output.glob(padrao),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+            for obsoleto in arquivos[max_retidos:]:
+                try:
+                    obsoleto.unlink()
+                    logger.info("Poda de outputs: removido %s", obsoleto.name)
+                except OSError as exc:
+                    logger.warning("Falha ao remover %s: %s", obsoleto, exc)
 
     def _log(self, msg: str) -> None:
         GLib.idle_add(self._on_log, msg)

@@ -126,10 +126,17 @@ class CortexPage(Gtk.Box):
         self._espolio = espolio_page
 
     def iniciar_pipeline_automatico(self) -> None:
-        """Inicia Ollama + Orchestrator programaticamente (chamado pela Busca)."""
+        """Inicia Ollama + Orchestrator programaticamente (chamado pela Busca).
+
+        Estratégia anti-race-condition: o Orchestrator é iniciado em estado
+        *pausado* ANTES do Scraper começar a empurrar assets. Quando o Ollama
+        fica pronto, `_cb_ollama_pronto` chama `retomar()` — isso evita que o
+        SENTINEL do Scraper seja consumido antes da hora.
+        """
         if self._orchestrator.esta_ativo():
             logger.info("Pipeline já ativo — ignorando início automático")
             return
+
         if self._lifecycle.esta_ativo():
             self._orchestrator.iniciar()
             self._btn_pausar_ia.set_sensitive(True)
@@ -137,13 +144,17 @@ class CortexPage(Gtk.Box):
             self._set_status("ativo", css="status-dot-concluido")
             logger.info("Pipeline automático: Orchestrator iniciado (Ollama já ativo)")
             return
+
+        self._orchestrator.iniciar(pausado=True)
         self._btn_analisar.set_sensitive(False)
+        self._btn_pausar_ia.set_sensitive(False)
+        self._btn_expurgar.set_sensitive(True)
         self._set_status("iniciando...", css="status-dot-ativo")
         self._lifecycle.subir(
             on_pronto=self._cb_ollama_pronto,
             on_erro=self._cb_ollama_erro,
         )
-        logger.info("Pipeline automático solicitado pela Busca")
+        logger.info("Pipeline automático solicitado pela Busca (orchestrator pausado aguardando Ollama)")
 
     def _build_ui(self) -> None:
         # Título
@@ -196,6 +207,13 @@ class CortexPage(Gtk.Box):
         self._btn_analisar.add_css_class("btn-primary")
         self._btn_analisar.connect("clicked", self._on_analisar)
 
+        self._btn_analisar_pasta = Gtk.Button(label="ANALISAR PASTA")
+        self._btn_analisar_pasta.add_css_class("btn-primary")
+        self._btn_analisar_pasta.set_tooltip_text(
+            "Reanalisa imagens já baixadas em data/sessao_atual sem precisar rescrapar"
+        )
+        self._btn_analisar_pasta.connect("clicked", self._on_analisar_pasta)
+
         self._btn_pausar_ia = Gtk.Button(label="PAUSAR IA")
         self._btn_pausar_ia.add_css_class("btn-warning")
         self._btn_pausar_ia.set_sensitive(False)
@@ -207,6 +225,7 @@ class CortexPage(Gtk.Box):
         self._btn_expurgar.connect("clicked", self._on_expurgar)
 
         ctrl_box.append(self._btn_analisar)
+        ctrl_box.append(self._btn_analisar_pasta)
         ctrl_box.append(self._btn_pausar_ia)
         ctrl_box.append(self._btn_expurgar)
         ctrl_frame.set_child(ctrl_box)
@@ -271,6 +290,58 @@ class CortexPage(Gtk.Box):
         )
         logger.info("Solicitando subida do Ollama")
 
+    def _on_analisar_pasta(self, _btn: Gtk.Button) -> None:
+        """Reanalisa imagens já baixadas sem precisar rescrapar.
+
+        Fluxo: 1) injeta assets do diretório local em `filas.scraper`;
+        2) inicia Orchestrator em estado pausado; 3) sobe Ollama;
+        4) `_cb_ollama_pronto` retoma o Orchestrator.
+        """
+        from pathlib import Path
+
+        from src.core.asset_queue import filas
+        from src.core.config.defaults import DEFAULTS
+
+        if self._orchestrator.esta_ativo():
+            self._log_ia.append_line("[AVISO] Pipeline já ativo — aguarde concluir.")
+            return
+
+        diretorio = Path(DEFAULTS["Saida"]["diretorio_data"])
+        if not diretorio.exists():
+            self._log_ia.append_line(f"[ERRO] Diretório não encontrado: {diretorio}")
+            return
+
+        filas.nova_sessao()
+        enfileirados = self._orchestrator.analisar_pasta_local(diretorio)
+        if enfileirados == 0:
+            self._log_ia.append_line(
+                f"[AVISO] Nenhuma imagem encontrada em {diretorio}. Use a Busca primeiro."
+            )
+            return
+
+        self._log_ia.append_line(
+            f"[INFO] {enfileirados} imagens encontradas em {diretorio}. Subindo Ollama..."
+        )
+        self._btn_analisar.set_sensitive(False)
+        self._btn_analisar_pasta.set_sensitive(False)
+        self._set_status("iniciando...", css="status-dot-ativo")
+
+        if self._lifecycle.esta_ativo():
+            self._orchestrator.iniciar()
+            self._btn_pausar_ia.set_sensitive(True)
+            self._btn_expurgar.set_sensitive(True)
+            self._set_status("ativo", css="status-dot-concluido")
+            logger.info("Analisar pasta: Orchestrator iniciado (Ollama já ativo)")
+            return
+
+        self._orchestrator.iniciar(pausado=True)
+        self._btn_expurgar.set_sensitive(True)
+        self._lifecycle.subir(
+            on_pronto=self._cb_ollama_pronto,
+            on_erro=self._cb_ollama_erro,
+        )
+        logger.info("Analisar pasta: %d assets enfileirados, Ollama subindo", enfileirados)
+
     def _on_pausar_ia(self, _btn: Gtk.Button) -> None:
         """Alterna pausa/retomada do Orchestrator."""
         if self._orchestrator.esta_ativo():
@@ -296,7 +367,7 @@ class CortexPage(Gtk.Box):
     # ------------------------------------------------------------------
 
     def _cb_ollama_pronto(self, msg: str) -> None:
-        """Ollama ativo — inicia o Orchestrator."""
+        """Ollama ativo — retoma (ou inicia) o Orchestrator."""
         from src.core.config.defaults import DEFAULTS
 
         self._set_status("ativo", css="status-dot-concluido")
@@ -308,16 +379,30 @@ class CortexPage(Gtk.Box):
         self._btn_expurgar.set_sensitive(True)
         self._btn_pausar_ia.set_sensitive(True)
         self._log_ia.append_line(f"[OK] {msg}")
-        self._orchestrator.iniciar()
+
+        if self._orchestrator.esta_ativo():
+            self._orchestrator.retomar()
+            logger.info("Córtex: Ollama pronto, Orchestrator retomado — %s", msg)
+        else:
+            self._orchestrator.iniciar()
+            logger.info("Córtex: Ollama pronto, Orchestrator iniciado — %s", msg)
+
         if self._status_bar:
             self._status_bar.update(status="ativa", sessao="análise")
-        logger.info("Córtex: Ollama pronto, Orchestrator iniciado — %s", msg)
 
     def _cb_ollama_erro(self, msg: str) -> None:
-        """Falha ao subir Ollama."""
+        """Falha ao subir Ollama — cancela Orchestrator se estiver aguardando."""
         self._set_status("erro", css="status-dot-erro")
         self._btn_analisar.set_sensitive(True)
+        self._btn_analisar_pasta.set_sensitive(True)
+        self._btn_pausar_ia.set_sensitive(False)
+        self._btn_expurgar.set_sensitive(False)
         self._log_ia.append_line(f"[ERRO] {msg}")
+
+        if self._orchestrator.esta_ativo():
+            self._orchestrator.cancelar()
+            logger.info("Córtex: Orchestrator cancelado devido à falha no Ollama")
+
         logger.error("Córtex: falha no Ollama — %s", msg)
 
     def _cb_expurgar_concluido(self) -> None:
@@ -326,6 +411,7 @@ class CortexPage(Gtk.Box):
         self._label_vram.set_label("VRAM: 0 GB")
         self._label_modelo.set_label("Modelo: --")
         self._btn_analisar.set_sensitive(True)
+        self._btn_analisar_pasta.set_sensitive(True)
         self._btn_pausar_ia.set_sensitive(False)
         self._btn_pausar_ia.set_label("PAUSAR IA")
         self._log_ia.append_line("[INFO] VRAM liberada.")
@@ -353,6 +439,8 @@ class CortexPage(Gtk.Box):
         """Orchestrator encerrou."""
         self._btn_pausar_ia.set_sensitive(False)
         self._btn_pausar_ia.set_label("PAUSAR IA")
+        self._btn_analisar.set_sensitive(True)
+        self._btn_analisar_pasta.set_sensitive(True)
         self._log_ia.append_line(f"[INFO] Análise concluída — {total} assets.")
         if self._status_bar:
             self._status_bar.update(status="concluída", baixados=total, total=total, sessao="análise")

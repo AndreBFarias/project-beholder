@@ -28,6 +28,11 @@ class AssetBruto:
     caminho_local: str
     tipo: str  # "icon" | "image" | "svg" | "background" | "other"
     origem: str  # URL da página onde foi encontrado
+    # Slug do site explícito — Sprint 21. Quando presente, o Orchestrator usa este
+    # valor diretamente em AssetProcessado.site_origem, sem consultar site_registry.
+    # Útil para modo "analisar pasta local" que recupera site de metadata.csv antigo
+    # ou nome de subpasta.
+    site_origem_hint: str | None = None
 
 
 @dataclass
@@ -41,6 +46,7 @@ class AssetProcessado:
     tags: list[str] = field(default_factory=list)
     paleta_hex: list[str] = field(default_factory=list)
     timestamp: str = ""
+    site_origem: str = "generic"  # Slug da SiteStrategy (ex: "pinterest", "dribbble", "generic")
 
 
 class FilasPipeline:

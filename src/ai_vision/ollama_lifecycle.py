@@ -25,11 +25,17 @@ from src.core.config.defaults import DEFAULTS
 logger = logging.getLogger("beholder.ai_vision.ollama_lifecycle")
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-_cfg_ia = DEFAULTS["IA"]
-PORTA_OLLAMA: int = _cfg_ia["ollama_port"]  # 11435
-BASE_URL = f"http://127.0.0.1:{PORTA_OLLAMA}"
 TIMEOUT_STARTUP = 30  # segundos aguardando Ollama responder na porta
 TIMEOUT_SIGTERM = 5  # segundos antes de escalar para SIGKILL
+
+
+def _porta_ollama() -> int:
+    """Porta lida dinamicamente de DEFAULTS (ADR-02)."""
+    return DEFAULTS["IA"]["ollama_port"]
+
+
+def _base_url() -> str:
+    return f"http://127.0.0.1:{_porta_ollama()}"
 
 
 class OllamaLifecycle:
@@ -63,7 +69,7 @@ class OllamaLifecycle:
         """Verifica se Ollama responde na porta 11435. Síncrono, timeout 2s."""
         try:
             with httpx.Client(timeout=2.0) as client:
-                return client.get(f"{BASE_URL}/api/tags").status_code == 200
+                return client.get(f"{_base_url()}/api/tags").status_code == 200
         except Exception as exc:
             logger.debug("Ping falhou: %s", exc)
             return False
@@ -125,6 +131,8 @@ class OllamaLifecycle:
     ) -> None:
         """Corpo da thread de inicialização."""
         binario = _PROJECT_ROOT / "bin" / "ollama"
+        cfg_ia = DEFAULTS["IA"]
+        porta = cfg_ia["ollama_port"]
 
         if not binario.exists():
             msg = f"Binário não encontrado: {binario}"
@@ -141,18 +149,18 @@ class OllamaLifecycle:
         # Verificar se a porta já está ocupada por outro processo
         try:
             with httpx.Client(timeout=1.0) as client:
-                client.get(f"{BASE_URL}/api/tags")
-            msg = f"Porta {PORTA_OLLAMA} já em uso — outro processo ativo"
+                client.get(f"{_base_url()}/api/tags")
+            msg = f"Porta {porta} já em uso — outro processo ativo"
             logger.warning(msg)
-            GLib.idle_add(on_pronto, f"Ollama já respondendo na porta {PORTA_OLLAMA}")
+            GLib.idle_add(on_pronto, f"Ollama já respondendo na porta {porta}")
             return
         except Exception:
             pass
 
         env = os.environ.copy()
-        env["OLLAMA_HOST"] = f"127.0.0.1:{PORTA_OLLAMA}"
-        env["OLLAMA_TMPDIR"] = str(_PROJECT_ROOT / _cfg_ia["ollama_tmpdir"])
-        env["OLLAMA_MODELS"] = str(_PROJECT_ROOT / _cfg_ia["ollama_models"])
+        env["OLLAMA_HOST"] = f"127.0.0.1:{porta}"
+        env["OLLAMA_TMPDIR"] = str(_PROJECT_ROOT / cfg_ia["ollama_tmpdir"])
+        env["OLLAMA_MODELS"] = str(_PROJECT_ROOT / cfg_ia["ollama_models"])
 
         Path(env["OLLAMA_TMPDIR"]).mkdir(parents=True, exist_ok=True)
         Path(env["OLLAMA_MODELS"]).mkdir(parents=True, exist_ok=True)
@@ -170,7 +178,7 @@ class OllamaLifecycle:
                 logger.info(
                     "Ollama iniciado — PID %d, porta %d",
                     self._processo.pid,
-                    PORTA_OLLAMA,
+                    porta,
                 )
             except OSError as exc:
                 msg = f"Falha ao iniciar Ollama: {exc}"
@@ -195,7 +203,7 @@ class OllamaLifecycle:
                 GLib.idle_add(on_erro, msg)
                 return
             if self.ping():
-                msg = f"Ollama ativo — PID {self._processo.pid}, porta {PORTA_OLLAMA}"
+                msg = f"Ollama ativo — PID {self._processo.pid}, porta {porta}"
                 logger.info(msg)
                 GLib.idle_add(on_pronto, msg)
                 return

@@ -90,10 +90,19 @@ class GrimorioPage(Gtk.Box):
         scraper_box.set_margin_start(8)
         scraper_box.set_margin_end(8)
 
-        row_timeout, self._entry_timeout = _criar_linha_config("Timeout (s):", "30")
-        row_delay_min, self._entry_delay_min = _criar_linha_config("Delay mínimo (s):", "1.0")
-        row_delay_max, self._entry_delay_max = _criar_linha_config("Delay máximo (s):", "3.0")
-        row_retries, self._entry_retries = _criar_linha_config("Máx. tentativas:", "3")
+        scraper_cfg = DEFAULTS["Scraper"]
+        row_timeout, self._entry_timeout = _criar_linha_config(
+            "Timeout (s):", str(scraper_cfg["timeout"])
+        )
+        row_delay_min, self._entry_delay_min = _criar_linha_config(
+            "Delay mínimo (s):", str(scraper_cfg["delay_min"])
+        )
+        row_delay_max, self._entry_delay_max = _criar_linha_config(
+            "Delay máximo (s):", str(scraper_cfg["delay_max"])
+        )
+        row_retries, self._entry_retries = _criar_linha_config(
+            "Máx. tentativas:", str(scraper_cfg["max_retries"])
+        )
 
         scraper_box.append(row_timeout)
         scraper_box.append(row_delay_min)
@@ -110,8 +119,13 @@ class GrimorioPage(Gtk.Box):
         ia_box.set_margin_start(8)
         ia_box.set_margin_end(8)
 
-        row_porta, self._entry_porta = _criar_linha_config("Porta Ollama:", "11435")
-        row_timeout_ia, self._entry_timeout_ia = _criar_linha_config("Timeout análise (s):", "60")
+        ia_cfg = DEFAULTS["IA"]
+        row_porta, self._entry_porta = _criar_linha_config(
+            "Porta Ollama:", str(ia_cfg["ollama_port"])
+        )
+        row_timeout_ia, self._entry_timeout_ia = _criar_linha_config(
+            "Timeout análise (s):", str(ia_cfg["timeout_analise"])
+        )
 
         # Seletor de tier de modelo (low/medium/high)
         row_tier = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
@@ -145,8 +159,13 @@ class GrimorioPage(Gtk.Box):
         saida_box.set_margin_start(8)
         saida_box.set_margin_end(8)
 
-        row_output, self._entry_output = _criar_linha_config("Diretório de saída:", "output")
-        row_kmeans, self._entry_kmeans = _criar_linha_config("Cores K-Means:", "4")
+        saida_cfg = DEFAULTS["Saida"]
+        row_output, self._entry_output = _criar_linha_config(
+            "Diretório de saída:", str(saida_cfg["diretorio_output"])
+        )
+        row_kmeans, self._entry_kmeans = _criar_linha_config(
+            "Cores K-Means:", str(saida_cfg["kmeans_cores"])
+        )
 
         saida_box.append(row_output)
         saida_box.append(row_kmeans)

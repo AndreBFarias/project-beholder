@@ -165,9 +165,12 @@ class CacadaPage(Gtk.Box):
 
         modo_furtivo = self._toggle_furtivo.get_active()
         filas.nova_sessao()
-        self._spider.iniciar(url, modo_furtivo=modo_furtivo)
+        # Ordem crítica (anti-race-condition): Córtex inicia o Orchestrator pausado
+        # ANTES do Scraper começar a empurrar assets. Isso impede que o SENTINEL
+        # do Scraper seja consumido antes do Ollama estar pronto.
         if self._cortex_page:
             self._cortex_page.iniciar_pipeline_automatico()
+        self._spider.iniciar(url, modo_furtivo=modo_furtivo)
         if self._status_bar:
             self._status_bar.update(status="ativa", sessao="busca")
         logger.info("Caçada iniciada: %s (furtivo=%s)", url, modo_furtivo)

@@ -172,9 +172,16 @@ project-beholder/
 ### Documentacao
 
 - [GSD.md](GSD.md) — Armadilhas criticas e estado das sprints
-- [CLAUDE.md](CLAUDE.md) — Regras de desenvolvimento
+- [GUIDE.md](GUIDE.md) — Regras de desenvolvimento
 - [docs/adr/](docs/adr/) — Decisoes de arquitetura
 - [docs/sprints/](docs/sprints/) — Historico e backlog de sprints
+
+---
+
+### Contribuidores
+
+- [@AndreBFarias](https://github.com/AndreBFarias) — Autor e mantenedor
+- [@vitoriamariadb](https://github.com/vitoriamariadb) — Contribuidora
 
 ---
 

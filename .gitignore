@@ -55,7 +55,7 @@ Layout UX Beholder
 Prompt
 
 # --- anti-IA (anonimato local) ---
-CLAUDE.md
+GUIDE.md
 AGENTS.md
 GEMINI.md
 COPILOT.md
@@ -71,3 +71,6 @@ STATE.md
 .aider*
 .continue/
 .github/copilot-instructions.md
+
+# Symlink local para diretrizes (não vai pro repo)
+CLAUDE.md
