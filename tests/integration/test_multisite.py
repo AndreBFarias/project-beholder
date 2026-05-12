@@ -12,8 +12,6 @@ Valida:
 
 import csv
 import zipfile
-from queue import Queue
-from unittest.mock import MagicMock, patch
 
 import pytest
 

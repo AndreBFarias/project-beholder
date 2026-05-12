@@ -1,0 +1,21 @@
+beholder (0.2.1) noble; urgency=medium
+
+  * Corrige crash do Cortex em assets vetoriais (SVG/ICO sao rasterizados
+    em memoria antes de chegar no decoder do Ollama).
+  * install.sh e run.sh agora extraem libs CUDA do tarball do Ollama
+    (lib/ollama/cuda_v*), permitindo uso real da GPU NVIDIA em vez de CPU.
+  * Pipeline de IA com fallback em camadas: prompt estruturado, perguntas
+    atomicas, heuristica de tipo por nome de arquivo. Resiliencia
+    independente do tamanho do modelo.
+  * Grimorio mostra status do modelo selecionado e oferece botao para
+    baixar modelos ausentes diretamente da UI.
+  * Config do Grimorio agora afeta o pipeline IA sem reiniciar
+    (Config.aplicar_em_defaults overlay).
+
+ -- Project Beholder <noreply@beholder.local>  Tue, 12 May 2026 21:00:00 -0300
+
+beholder (0.2.0) noble; urgency=low
+
+  * Versao inicial empacotada.
+
+ -- Project Beholder <noreply@beholder.local>  Wed, 15 Apr 2026 12:00:00 -0300

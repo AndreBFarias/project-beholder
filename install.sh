@@ -161,10 +161,12 @@ else
     OLLAMA_URL="https://github.com/ollama/ollama/releases/download/${OLLAMA_VERSION}/ollama-linux-amd64.tar.zst"
     OLLAMA_TMP_TAR="$PROJECT_DIR/bin/.ollama-download.tar.zst"
     if curl -fSL --progress-bar "$OLLAMA_URL" -o "$OLLAMA_TMP_TAR"; then
-        tar --zstd -xf "$OLLAMA_TMP_TAR" -C "$PROJECT_DIR" bin/ollama
+        # Extrair tudo: bin/ollama + lib/ollama/{cuda_v12,cuda_v13,vulkan,...}
+        # Sem as libs/cuda_v*, o Ollama roda em CPU mesmo com GPU disponível.
+        tar --zstd -xf "$OLLAMA_TMP_TAR" -C "$PROJECT_DIR"
         chmod +x "$OLLAMA_BIN"
         rm -f "$OLLAMA_TMP_TAR"
-        ok "bin/ollama ${OLLAMA_VERSION} instalado"
+        ok "bin/ollama ${OLLAMA_VERSION} instalado (com libs CUDA)"
     else
         log "AVISO: Falha ao baixar Ollama — análise de IA indisponível"
         log "       URL tentada: $OLLAMA_URL"

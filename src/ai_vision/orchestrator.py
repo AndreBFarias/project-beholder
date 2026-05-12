@@ -162,10 +162,7 @@ class Orchestrator:
                 break
 
         if recuperados_csv or recuperados_subpasta:
-            self._log(
-                f"[INFO] site_origem recuperado: {recuperados_csv} via CSV, "
-                f"{recuperados_subpasta} via subpasta"
-            )
+            self._log(f"[INFO] site_origem recuperado: {recuperados_csv} via CSV, {recuperados_subpasta} via subpasta")
 
         try:
             filas.scraper.put(SENTINEL, timeout=5.0)
@@ -244,10 +241,7 @@ class Orchestrator:
                     logger.warning("K-Means falhou para %s: %s", asset_bruto.caminho_local, exc)
 
                 # Sprint 21: hint explícito tem prioridade sobre resolução por URL.
-                site_origem = (
-                    asset_bruto.site_origem_hint
-                    or resolver_strategy(asset_bruto.origem).nome
-                )
+                site_origem = asset_bruto.site_origem_hint or resolver_strategy(asset_bruto.origem).nome
                 processado = AssetProcessado(
                     url_original=asset_bruto.url,
                     caminho_local=asset_bruto.caminho_local,

@@ -11,10 +11,10 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 
-import pytest
+import pytest  # noqa: E402
 
-import src.core.checkpoint as ckpt
-from src.core.checkpoint import EstadoCheckpoint
+import src.core.checkpoint as ckpt  # noqa: E402
+from src.core.checkpoint import EstadoCheckpoint  # noqa: E402
 
 
 @pytest.fixture
@@ -31,9 +31,7 @@ def test_botao_retomar_desabilitado_sem_checkpoint(ckpt_path_tmp):
     from src.gui.pages.protocolo import ProtocoloPage
 
     page = ProtocoloPage()
-    assert not page._btn_retomar.get_sensitive(), (
-        "Sem checkpoint salvo, botão RETOMAR deve iniciar desabilitado"
-    )
+    assert not page._btn_retomar.get_sensitive(), "Sem checkpoint salvo, botão RETOMAR deve iniciar desabilitado"
 
 
 @pytest.mark.integration

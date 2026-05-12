@@ -34,10 +34,10 @@ DEFAULTS: dict = {
         "ollama_tmpdir": "data/ollama_tmp",
         "ollama_models": "models",
         # Limites de geração e parsing (Sprint 20 — descrições mais ricas):
-        "num_predict": 400,          # tokens máximos por resposta (antes: 150 truncava demais)
+        "num_predict": 400,  # tokens máximos por resposta (antes: 150 truncava demais)
         "max_descricao_chars": 300,  # limite no parser para a coluna descricao do CSV
-        "max_tags": 10,              # limite no parser para a coluna tags do CSV
-        "min_tags_esperadas": 5,     # abaixo disso considera resposta pobre e tenta retry
+        "max_tags": 10,  # limite no parser para a coluna tags do CSV
+        "min_tags_esperadas": 5,  # abaixo disso considera resposta pobre e tenta retry
     },
     "Saida": {
         "diretorio_output": "output",
