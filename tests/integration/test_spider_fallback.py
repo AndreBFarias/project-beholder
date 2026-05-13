@@ -9,7 +9,6 @@ Valida:
 
 import threading
 import unittest.mock as mock
-from pathlib import Path
 
 import pytest
 

@@ -27,6 +27,20 @@ from src.core.config.defaults import DEFAULTS
 logger = logging.getLogger("beholder.gui.grimorio")
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_OLLAMA_BIN = _PROJECT_ROOT / "bin" / "ollama"
+_MODELS_DIR = _PROJECT_ROOT / "models"
+
+
+def _modelo_ja_baixado(nome_modelo: str) -> bool:
+    """True se há manifest do modelo dentro de models/manifests."""
+    manifests = _MODELS_DIR / "manifests"
+    if not manifests.exists():
+        return False
+    alvo = nome_modelo.replace(":", "/")
+    for p in manifests.rglob("*"):
+        if p.is_file() and alvo in str(p):
+            return True
+    return False
 
 
 def _criar_linha_config(label_texto: str, valor_padrao: str) -> tuple[Gtk.Box, Gtk.Entry]:
@@ -91,18 +105,10 @@ class GrimorioPage(Gtk.Box):
         scraper_box.set_margin_end(8)
 
         scraper_cfg = DEFAULTS["Scraper"]
-        row_timeout, self._entry_timeout = _criar_linha_config(
-            "Timeout (s):", str(scraper_cfg["timeout"])
-        )
-        row_delay_min, self._entry_delay_min = _criar_linha_config(
-            "Delay mínimo (s):", str(scraper_cfg["delay_min"])
-        )
-        row_delay_max, self._entry_delay_max = _criar_linha_config(
-            "Delay máximo (s):", str(scraper_cfg["delay_max"])
-        )
-        row_retries, self._entry_retries = _criar_linha_config(
-            "Máx. tentativas:", str(scraper_cfg["max_retries"])
-        )
+        row_timeout, self._entry_timeout = _criar_linha_config("Timeout (s):", str(scraper_cfg["timeout"]))
+        row_delay_min, self._entry_delay_min = _criar_linha_config("Delay mínimo (s):", str(scraper_cfg["delay_min"]))
+        row_delay_max, self._entry_delay_max = _criar_linha_config("Delay máximo (s):", str(scraper_cfg["delay_max"]))
+        row_retries, self._entry_retries = _criar_linha_config("Máx. tentativas:", str(scraper_cfg["max_retries"]))
 
         scraper_box.append(row_timeout)
         scraper_box.append(row_delay_min)
@@ -120,9 +126,7 @@ class GrimorioPage(Gtk.Box):
         ia_box.set_margin_end(8)
 
         ia_cfg = DEFAULTS["IA"]
-        row_porta, self._entry_porta = _criar_linha_config(
-            "Porta Ollama:", str(ia_cfg["ollama_port"])
-        )
+        row_porta, self._entry_porta = _criar_linha_config("Porta Ollama:", str(ia_cfg["ollama_port"]))
         row_timeout_ia, self._entry_timeout_ia = _criar_linha_config(
             "Timeout análise (s):", str(ia_cfg["timeout_analise"])
         )
@@ -142,11 +146,29 @@ class GrimorioPage(Gtk.Box):
                 f"{tier_id.upper()} — {info['nome']} ({info['vram_gb']} GB) — {info['descricao']}",
             )
         self._combo_tier.set_hexpand(True)
+        self._combo_tier.connect("changed", self._on_tier_alterado)
         row_tier.append(lbl_tier)
         row_tier.append(self._combo_tier)
 
+        # Status do modelo selecionado (baixado/ausente) + botão baixar
+        row_modelo_status = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        lbl_modelo_status_label = Gtk.Label(label="Status do modelo:")
+        lbl_modelo_status_label.add_css_class("section-title")
+        lbl_modelo_status_label.set_xalign(0)
+        lbl_modelo_status_label.set_size_request(180, -1)
+        self._label_modelo_status = Gtk.Label(label="")
+        self._label_modelo_status.set_xalign(0)
+        self._label_modelo_status.set_hexpand(True)
+        self._btn_baixar_modelo = Gtk.Button(label="BAIXAR MODELO")
+        self._btn_baixar_modelo.add_css_class("btn-secondary")
+        self._btn_baixar_modelo.connect("clicked", self._on_baixar_modelo)
+        row_modelo_status.append(lbl_modelo_status_label)
+        row_modelo_status.append(self._label_modelo_status)
+        row_modelo_status.append(self._btn_baixar_modelo)
+
         ia_box.append(row_porta)
         ia_box.append(row_tier)
+        ia_box.append(row_modelo_status)
         ia_box.append(row_timeout_ia)
         ia_frame.set_child(ia_box)
         conteudo.append(ia_frame)
@@ -160,12 +182,8 @@ class GrimorioPage(Gtk.Box):
         saida_box.set_margin_end(8)
 
         saida_cfg = DEFAULTS["Saida"]
-        row_output, self._entry_output = _criar_linha_config(
-            "Diretório de saída:", str(saida_cfg["diretorio_output"])
-        )
-        row_kmeans, self._entry_kmeans = _criar_linha_config(
-            "Cores K-Means:", str(saida_cfg["kmeans_cores"])
-        )
+        row_output, self._entry_output = _criar_linha_config("Diretório de saída:", str(saida_cfg["diretorio_output"]))
+        row_kmeans, self._entry_kmeans = _criar_linha_config("Cores K-Means:", str(saida_cfg["kmeans_cores"]))
 
         saida_box.append(row_output)
         saida_box.append(row_kmeans)
@@ -228,6 +246,30 @@ class GrimorioPage(Gtk.Box):
         self._entry_timeout_ia.set_text(str(self._cfg.get("IA", "timeout_analise")))
         self._entry_output.set_text(str(self._cfg.get("Saida", "diretorio_output")))
         self._entry_kmeans.set_text(str(self._cfg.get("Saida", "kmeans_cores")))
+        self._atualizar_status_modelo()
+
+    def _modelo_do_tier_selecionado(self) -> str | None:
+        """Nome técnico do modelo no Ollama para o tier atualmente selecionado."""
+        tier = self._combo_tier.get_active_id() or "low"
+        info = DEFAULTS["IA"]["modelos_disponiveis"].get(tier)
+        return info["nome"] if info else None
+
+    def _atualizar_status_modelo(self) -> None:
+        """Atualiza o label e o botão de baixar conforme o modelo selecionado."""
+        nome = self._modelo_do_tier_selecionado()
+        if not nome:
+            self._label_modelo_status.set_label("—")
+            self._btn_baixar_modelo.set_sensitive(False)
+            return
+        if _modelo_ja_baixado(nome):
+            self._label_modelo_status.set_label(f"[OK] {nome} presente")
+            self._btn_baixar_modelo.set_sensitive(False)
+        else:
+            self._label_modelo_status.set_label(f"[AUSENTE] {nome} não baixado")
+            self._btn_baixar_modelo.set_sensitive(True)
+
+    def _on_tier_alterado(self, _combo: Gtk.ComboBoxText) -> None:
+        self._atualizar_status_modelo()
 
     # ------------------------------------------------------------------
     # Handlers de botão
@@ -250,11 +292,110 @@ class GrimorioPage(Gtk.Box):
             self._cfg.set("Saida", "diretorio_output", self._entry_output.get_text().strip())
             self._cfg.set("Saida", "kmeans_cores", self._entry_kmeans.get_text().strip())
             self._cfg.save()
-            self._label_status.set_label("[OK] Configurações salvas.")
+            # Aplica imediatamente em DEFAULTS para o pipeline IA usar sem reiniciar.
+            self._cfg.aplicar_em_defaults()
+            self._label_status.set_label("[OK] Configurações salvas e ativas.")
             logger.info("Grimório: configurações salvas")
         except Exception as exc:
             self._label_status.set_label(f"[ERRO] {exc}")
             logger.error("Falha ao salvar configurações: %s", exc)
+
+    def _on_baixar_modelo(self, _btn: Gtk.Button) -> None:
+        """Baixa via ./bin/ollama pull o modelo do tier selecionado em thread."""
+        nome = self._modelo_do_tier_selecionado()
+        if not nome:
+            self._label_status.set_label("[ERRO] Tier desconhecido.")
+            return
+        if not _OLLAMA_BIN.exists():
+            self._label_status.set_label("[ERRO] bin/ollama ausente — rode install.sh.")
+            return
+        self._btn_baixar_modelo.set_sensitive(False)
+        self._label_status.set_label(f"Baixando {nome}... (pode levar minutos)")
+        threading.Thread(
+            target=self._thread_baixar_modelo,
+            args=(nome,),
+            daemon=True,
+            name="beholder-grimorio-pull",
+        ).start()
+        logger.info("Grimório: solicitando pull de %s", nome)
+
+    def _thread_baixar_modelo(self, nome: str) -> None:
+        """Sobe Ollama temporário, faz pull do modelo, encerra (ADR-03)."""
+        import os
+        import time
+
+        env = os.environ.copy()
+        porta = DEFAULTS["IA"]["ollama_port"]
+        env["OLLAMA_HOST"] = f"127.0.0.1:{porta}"
+        env["OLLAMA_MODELS"] = str(_MODELS_DIR)
+        env["OLLAMA_TMPDIR"] = str(_PROJECT_ROOT / DEFAULTS["IA"]["ollama_tmpdir"])
+
+        # Se já há servidor respondendo, reusa em vez de subir outro.
+        servidor_proprio = None
+        try:
+            with httpx.Client(timeout=1.0) as c:
+                c.get(f"http://127.0.0.1:{porta}/api/tags")
+            logger.info("Grimório: Ollama já ativo — reaproveitando para pull")
+        except Exception:
+            try:
+                servidor_proprio = subprocess.Popen(
+                    [str(_OLLAMA_BIN), "serve"],
+                    env=env,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except OSError as exc:
+                GLib.idle_add(self._label_status.set_label, f"[ERRO] Não foi possível subir Ollama: {exc}")
+                GLib.idle_add(self._atualizar_status_modelo)
+                return
+            # Espera porta abrir (até 30s)
+            for _ in range(30):
+                try:
+                    with httpx.Client(timeout=1.0) as c:
+                        if c.get(f"http://127.0.0.1:{porta}/api/tags").status_code == 200:
+                            break
+                except Exception:
+                    time.sleep(1)
+            else:
+                GLib.idle_add(self._label_status.set_label, "[ERRO] Ollama temporário não respondeu em 30s.")
+                if servidor_proprio:
+                    servidor_proprio.terminate()
+                GLib.idle_add(self._atualizar_status_modelo)
+                return
+
+        try:
+            proc = subprocess.run(
+                [str(_OLLAMA_BIN), "pull", nome],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=1800,  # 30 minutos
+            )
+            if proc.returncode == 0:
+                GLib.idle_add(self._label_status.set_label, f"[OK] Modelo {nome} baixado.")
+                logger.info("Grimório: pull de %s OK", nome)
+            else:
+                tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-3:]
+                msg = " | ".join(tail) or "erro desconhecido"
+                GLib.idle_add(self._label_status.set_label, f"[ERRO pull] {msg[:200]}")
+                logger.error("Grimório: pull de %s falhou rc=%d: %s", nome, proc.returncode, msg)
+        except subprocess.TimeoutExpired:
+            GLib.idle_add(self._label_status.set_label, "[ERRO] Timeout no download (>30 min).")
+            logger.error("Grimório: timeout no pull de %s", nome)
+        except Exception as exc:
+            GLib.idle_add(self._label_status.set_label, f"[ERRO] {exc}")
+            logger.exception("Grimório: falha no pull de %s", nome)
+        finally:
+            if servidor_proprio:
+                try:
+                    servidor_proprio.terminate()
+                    servidor_proprio.wait(timeout=5)
+                except Exception:
+                    try:
+                        servidor_proprio.kill()
+                    except Exception:
+                        pass
+            GLib.idle_add(self._atualizar_status_modelo)
 
     def _on_testar_ollama(self, _btn: Gtk.Button) -> None:
         """Faz ping na porta configurada do Ollama em thread separada (ADR-01)."""

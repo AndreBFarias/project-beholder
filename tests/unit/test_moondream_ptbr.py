@@ -27,9 +27,7 @@ def test_prompt_exige_portugues():
 def test_parser_aceita_resposta_ptbr():
     """Resposta com 'descrição:' (acentuada) deve ser parseada."""
     resposta = (
-        "type: icon\n"
-        "descrição: ícone de engrenagem representando configuração\n"
-        "tags: engrenagem, configuração, ajuste"
+        "type: icon\ndescrição: ícone de engrenagem representando configuração\ntags: engrenagem, configuração, ajuste"
     )
     resultado = _parse_chave_valor(resposta)
     assert resultado is not None
@@ -40,11 +38,7 @@ def test_parser_aceita_resposta_ptbr():
 
 def test_parser_aceita_resposta_inglesa_como_fallback():
     """Quando o modelo ignora a instrução e volta em inglês, ainda parseamos."""
-    resposta = (
-        "type: background\n"
-        "description: dark abstract background with purple tones\n"
-        "tags: dark, abstract, purple"
-    )
+    resposta = "type: background\ndescription: dark abstract background with purple tones\ntags: dark, abstract, purple"
     resultado = _parse_chave_valor(resposta)
     assert resultado is not None
     assert resultado["tipo"] == "background"
@@ -70,12 +64,7 @@ def test_parsear_resposta_formato_json():
 
 def test_parsear_resposta_formato_livre_ptbr():
     """Resposta em texto livre com chaves PT-BR deve parsear."""
-    texto = (
-        "Esta é uma imagem.\n"
-        "type: photo\n"
-        "descrição: fotografia de paisagem noturna\n"
-        "tags: paisagem, noite, urbano"
-    )
+    texto = "Esta é uma imagem.\ntype: photo\ndescrição: fotografia de paisagem noturna\ntags: paisagem, noite, urbano"
     resultado = _parsear_resposta(texto)
     assert resultado["tipo"] == "photo"
     assert "paisagem" in resultado["descricao"]

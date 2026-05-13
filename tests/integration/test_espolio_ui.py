@@ -12,10 +12,10 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 
-import pytest
-from gi.repository import Gtk
+import pytest  # noqa: E402
+from gi.repository import Gtk  # noqa: E402
 
-from src.core.asset_queue import AssetProcessado
+from src.core.asset_queue import AssetProcessado  # noqa: E402
 
 
 def _coletar_texto(widget):

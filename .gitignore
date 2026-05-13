@@ -74,3 +74,5 @@ STATE.md
 
 # Symlink local para diretrizes (não vai pro repo)
 CLAUDE.md
+lib/
+dist/

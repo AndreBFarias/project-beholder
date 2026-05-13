@@ -72,22 +72,14 @@ def test_parser_remove_tags_duplicadas():
 
 def test_parser_respeita_max_descricao_dinamico(cfg_ia_backup):
     DEFAULTS["IA"]["max_descricao_chars"] = 20
-    resposta = (
-        "type: icon\n"
-        "descrição: uma descrição muito longa que deveria ser cortada no limite.\n"
-        "tags: a, b, c"
-    )
+    resposta = "type: icon\ndescrição: uma descrição muito longa que deveria ser cortada no limite.\ntags: a, b, c"
     resultado = _parse_chave_valor(resposta)
     assert len(resultado["descricao"]) == 20
 
 
 def test_parser_respeita_max_tags_dinamico(cfg_ia_backup):
     DEFAULTS["IA"]["max_tags"] = 3
-    resposta = (
-        "type: icon\n"
-        "descrição: teste.\n"
-        "tags: a, b, c, d, e, f, g"
-    )
+    resposta = "type: icon\ndescrição: teste.\ntags: a, b, c, d, e, f, g"
     resultado = _parse_chave_valor(resposta)
     assert len(resultado["tags"]) == 3
     assert resultado["tags"] == ["a", "b", "c"]
@@ -120,7 +112,7 @@ def test_parser_sem_tags_ainda_retorna():
 def test_parsear_resposta_json_com_descricao_longa():
     texto = (
         '{"type": "photo", "description": "Fotografia ampla de uma paisagem costeira '
-        'ao amanhecer, com tons rosados no céu e silhuetas de coqueiros à margem direita. '
+        "ao amanhecer, com tons rosados no céu e silhuetas de coqueiros à margem direita. "
         'Estilo cinematográfico, ideal para landing page de turismo.", '
         '"tags": ["paisagem", "amanhecer", "costa", "coqueiros", "rosa", "turismo"]}'
     )

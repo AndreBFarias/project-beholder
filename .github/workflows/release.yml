@@ -1,0 +1,144 @@
+name: Release
+
+# Dispara ao push de tag v* (ex: v0.2.1).
+# Tres jobs em paralelo (deb, appimage, flatpak); ao final um job junta os
+# artefatos em uma GitHub Release. Jobs marcados continue-on-error pra
+# evitar bloqueio caso uma plataforma de packaging falhe isoladamente.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: 'Versao a empacotar (ex: 0.2.1)'
+        required: true
+        default: '0.2.1'
+
+permissions:
+  contents: write
+
+jobs:
+  build-deb:
+    name: Build .deb
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determinar versao
+        id: versao
+        run: |
+          if [ -n "${{ inputs.versao }}" ]; then
+            echo "valor=${{ inputs.versao }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "valor=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dependencias do build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev imagemagick rsync
+
+      - name: Build
+        run: |
+          chmod +x packaging/build-deb.sh
+          ./packaging/build-deb.sh "${{ steps.versao.outputs.valor }}"
+
+      - name: Upload artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: beholder-deb
+          path: dist/*.deb
+          if-no-files-found: error
+
+  build-appimage:
+    name: Build AppImage
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determinar versao
+        id: versao
+        run: |
+          if [ -n "${{ inputs.versao }}" ]; then
+            echo "valor=${{ inputs.versao }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "valor=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dependencias do build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick rsync libfuse2 wget
+
+      - name: Build
+        run: |
+          chmod +x packaging/build-appimage.sh
+          ./packaging/build-appimage.sh "${{ steps.versao.outputs.valor }}"
+
+      - name: Upload artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: beholder-appimage
+          path: dist/*.AppImage
+          if-no-files-found: error
+
+  build-flatpak:
+    name: Build Flatpak
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determinar versao
+        id: versao
+        run: |
+          if [ -n "${{ inputs.versao }}" ]; then
+            echo "valor=${{ inputs.versao }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "valor=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build via flatpak-github-actions
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6.5
+        with:
+          bundle: beholder-${{ steps.versao.outputs.valor }}.flatpak
+          manifest-path: com.beholder.app.yml
+
+      - name: Upload artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: beholder-flatpak
+          path: '*.flatpak'
+          if-no-files-found: warn
+
+  release:
+    name: Publicar Release
+    needs: [build-deb, build-appimage, build-flatpak]
+    runs-on: ubuntu-latest
+    if: always() && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download de artefatos
+        uses: actions/download-artifact@v4
+        with:
+          path: artefatos
+
+      - name: Listar artefatos
+        run: |
+          find artefatos -type f -printf '%p (%s bytes)\n'
+
+      - name: Criar GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artefatos/**/*.deb
+            artefatos/**/*.AppImage
+            artefatos/**/*.flatpak
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

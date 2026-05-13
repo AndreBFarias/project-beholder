@@ -5,6 +5,7 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw, GLib  # noqa: E402
 
+from src.core.config.config import Config  # noqa: E402
 from src.core.logging_config import setup_logging  # noqa: E402
 from src.gui.main_window import BeholderWindow  # noqa: E402
 
@@ -13,6 +14,9 @@ _APP_ID = "com.beholder.app"
 
 def main() -> None:
     setup_logging()
+    # Aplica overrides do config.ini em DEFAULTS antes de criar widgets;
+    # caso contrário o pipeline IA ignoraria a tier escolhida no Grimório.
+    Config().aplicar_em_defaults()
     GLib.set_prgname(_APP_ID)
     GLib.set_application_name("Beholder")
     app = Adw.Application(application_id=_APP_ID)

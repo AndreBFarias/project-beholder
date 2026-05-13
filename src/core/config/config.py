@@ -70,6 +70,26 @@ class Config:
             logger.info("Configuração do usuário removida — defaults restaurados")
         self._parser = configparser.ConfigParser()
 
+    def aplicar_em_defaults(self) -> None:
+        """Sobrescreve DEFAULTS em memória com os valores do config.ini.
+
+        Necessário porque a maior parte do código lê DEFAULTS diretamente em
+        vez de passar por Config.get(). Sem este overlay, mudanças via Grimório
+        seriam ignoradas pelo pipeline de IA até reiniciar.
+
+        Preserva o tipo do valor de referência em DEFAULTS.
+        """
+        for secao in self._parser.sections():
+            if secao not in DEFAULTS:
+                continue
+            for chave in self._parser.options(secao):
+                if chave not in DEFAULTS[secao]:
+                    continue
+                referencia = DEFAULTS[secao][chave]
+                valor_raw = self._parser.get(secao, chave)
+                DEFAULTS[secao][chave] = self._converter_tipo(valor_raw, referencia)
+        logger.debug("Overlay de config.ini aplicado em DEFAULTS")
+
     @staticmethod
     def _converter_tipo(valor_raw: str, referencia: Any) -> Any:
         """Converte string do configparser para o tipo do valor de referência."""

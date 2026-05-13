@@ -12,7 +12,6 @@ import copy
 import csv
 import threading
 import unittest.mock as mock
-from pathlib import Path
 
 import pytest
 
@@ -67,9 +66,7 @@ def cfg_saida_backup():
 
 
 @pytest.mark.integration
-def test_hint_preservado_em_asset_processado(
-    filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path
-):
+def test_hint_preservado_em_asset_processado(filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path):
     """Orchestrator deve usar site_origem_hint em vez de resolver_strategy('local')."""
     monkeypatch.setattr("src.ai_vision.orchestrator.filas", filas_teste)
 
@@ -105,9 +102,7 @@ def test_hint_preservado_em_asset_processado(
 
 
 @pytest.mark.integration
-def test_sem_hint_usa_resolver_strategy(
-    filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path
-):
+def test_sem_hint_usa_resolver_strategy(filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path):
     """Sem hint, fallback para resolver_strategy(origem). 'local' vira 'generic'."""
     monkeypatch.setattr("src.ai_vision.orchestrator.filas", filas_teste)
 
@@ -159,7 +154,16 @@ def test_construir_mapa_sites_le_csv_na_pasta(filas_teste, tmp_path):
     with csv_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["caminho_local", "site_origem", "url_original", "tipo", "descricao", "tags", "paleta_hex", "timestamp"],
+            fieldnames=[
+                "caminho_local",
+                "site_origem",
+                "url_original",
+                "tipo",
+                "descricao",
+                "tags",
+                "paleta_hex",
+                "timestamp",
+            ],
         )
         writer.writeheader()
         writer.writerow(

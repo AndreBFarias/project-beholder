@@ -1,0 +1,38 @@
+app-id: com.beholder.app
+runtime: org.gnome.Platform
+runtime-version: '46'
+sdk: org.gnome.Sdk
+command: beholder
+finish-args:
+  # Acesso ao display (Wayland + fallback X11)
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+  # Rede para scraping e download do Ollama/modelos
+  - --share=network
+  # Acesso de leitura ao diretorio do usuario (assets baixados, exports)
+  - --filesystem=home
+  # Som (caso necessario para playwright/chromium futuramente)
+  - --socket=pulseaudio
+
+modules:
+  - name: beholder
+    buildsystem: simple
+    build-commands:
+      # Layout dentro do /app
+      - install -d /app/lib/beholder
+      - install -d /app/bin
+      - install -d /app/share/applications
+      - install -d /app/share/icons/hicolor/256x256/apps
+      # Copia codigo
+      - cp -r src main.py run.sh install.sh requirements.txt beholder-icon.png /app/lib/beholder/
+      # Lancador
+      - install -Dm755 packaging/flatpak-launcher.sh /app/bin/beholder
+      # .desktop
+      - install -Dm644 packaging/com.beholder.app.desktop /app/share/applications/com.beholder.app.desktop
+      # Icone
+      - install -Dm644 beholder-icon.png /app/share/icons/hicolor/256x256/apps/com.beholder.app.png
+    sources:
+      - type: dir
+        path: .

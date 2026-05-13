@@ -224,10 +224,11 @@ if [ ! -f "$OLLAMA_BIN" ]; then
     OLLAMA_URL="https://github.com/ollama/ollama/releases/download/${OLLAMA_VERSION}/ollama-linux-amd64.tar.zst"
     OLLAMA_TMP_TAR="$PROJECT_DIR/bin/.ollama-download.tar.zst"
     if curl -fSL --progress-bar "$OLLAMA_URL" -o "$OLLAMA_TMP_TAR"; then
-        tar --zstd -xf "$OLLAMA_TMP_TAR" -C "$PROJECT_DIR" bin/ollama
+        # Extrair tudo: bin/ollama + lib/ollama/* (CUDA, Vulkan, runners CPU)
+        tar --zstd -xf "$OLLAMA_TMP_TAR" -C "$PROJECT_DIR"
         chmod +x "$OLLAMA_BIN"
         rm -f "$OLLAMA_TMP_TAR"
-        log "bin/ollama ${OLLAMA_VERSION} instalado."
+        log "bin/ollama ${OLLAMA_VERSION} instalado (com libs CUDA)."
     else
         log "AVISO: Falha ao baixar Ollama — análise de IA indisponível."
         rm -f "$OLLAMA_TMP_TAR"

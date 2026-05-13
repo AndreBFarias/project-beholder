@@ -314,14 +314,10 @@ class CortexPage(Gtk.Box):
         filas.nova_sessao()
         enfileirados = self._orchestrator.analisar_pasta_local(diretorio)
         if enfileirados == 0:
-            self._log_ia.append_line(
-                f"[AVISO] Nenhuma imagem encontrada em {diretorio}. Use a Busca primeiro."
-            )
+            self._log_ia.append_line(f"[AVISO] Nenhuma imagem encontrada em {diretorio}. Use a Busca primeiro.")
             return
 
-        self._log_ia.append_line(
-            f"[INFO] {enfileirados} imagens encontradas em {diretorio}. Subindo Ollama..."
-        )
+        self._log_ia.append_line(f"[INFO] {enfileirados} imagens encontradas em {diretorio}. Subindo Ollama...")
         self._btn_analisar.set_sensitive(False)
         self._btn_analisar_pasta.set_sensitive(False)
         self._set_status("iniciando...", css="status-dot-ativo")

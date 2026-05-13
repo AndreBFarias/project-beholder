@@ -11,7 +11,6 @@ Valida:
 
 import threading
 import unittest.mock as mock
-from pathlib import Path
 
 import pytest
 
@@ -46,9 +45,7 @@ def mock_paleta(monkeypatch):
 
 
 @pytest.mark.integration
-def test_reanalise_processa_imagens_locais(
-    filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path
-):
+def test_reanalise_processa_imagens_locais(filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path):
     """Reanálise lê imagens do disco e as processa pelo pipeline completo."""
     monkeypatch.setattr("src.ai_vision.orchestrator.filas", filas_teste)
 
@@ -81,9 +78,7 @@ def test_reanalise_processa_imagens_locais(
 
 
 @pytest.mark.integration
-def test_reanalise_pasta_vazia_emite_aviso(
-    filas_teste, mock_glib, monkeypatch, tmp_path
-):
+def test_reanalise_pasta_vazia_emite_aviso(filas_teste, mock_glib, monkeypatch, tmp_path):
     """Pasta existe mas sem imagens — não enfileira nada, ainda envia SENTINEL."""
     monkeypatch.setattr("src.ai_vision.orchestrator.filas", filas_teste)
 
@@ -104,9 +99,7 @@ def test_reanalise_pasta_vazia_emite_aviso(
     orch.iniciar()
     assert concluido.wait(timeout=5.0)
 
-    assert any("Nenhum asset para analisar" in m for m in log_msgs), (
-        f"Esperava aviso de fila vazia. Logs: {log_msgs}"
-    )
+    assert any("Nenhum asset para analisar" in m for m in log_msgs), f"Esperava aviso de fila vazia. Logs: {log_msgs}"
 
 
 @pytest.mark.integration
@@ -131,9 +124,7 @@ def test_reanalise_diretorio_inexistente(filas_teste, mock_glib, monkeypatch, tm
 
 
 @pytest.mark.integration
-def test_reanalise_varredura_recursiva(
-    filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path
-):
+def test_reanalise_varredura_recursiva(filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path):
     """rglob deve encontrar imagens em subpastas."""
     monkeypatch.setattr("src.ai_vision.orchestrator.filas", filas_teste)
 

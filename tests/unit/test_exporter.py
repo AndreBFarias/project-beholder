@@ -170,6 +170,4 @@ def test_subpasta_nunca_usa_ingles():
     """Garante que nenhum tipo conhecido retorna nome de pasta em inglês."""
     proibidos = {"icons", "backgrounds"}
     for tipo in ("icon", "logo", "svg", "vector", "background", "photo", "ui_element", "other"):
-        assert subpasta_tipo(tipo) not in proibidos, (
-            f"subpasta_tipo({tipo!r}) retornou nome em inglês"
-        )
+        assert subpasta_tipo(tipo) not in proibidos, f"subpasta_tipo({tipo!r}) retornou nome em inglês"

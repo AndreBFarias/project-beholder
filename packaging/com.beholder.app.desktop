@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Beholder
+Comment=Motor de predação visual de assets de interface
+Exec=beholder
+Icon=com.beholder.app
+Terminal=false
+Categories=Development;Graphics;
+Keywords=design;assets;scraper;vision;
+StartupWMClass=com.beholder.app
