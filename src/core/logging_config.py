@@ -27,12 +27,20 @@ def setup_logging() -> None:
     Deve ser chamado uma única vez na inicialização, antes de qualquer
     outro módulo usar logging.getLogger().
     """
-    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    # Resolve LOGS_DIR/LOG_FILE em runtime para respeitar monkeypatching nos
+    # testes (e cenarios onde LOGS_DIR foi reapontado apos o import).
+    import sys
+
+    modulo = sys.modules[__name__]
+    logs_dir = getattr(modulo, "LOGS_DIR", LOGS_DIR)
+    log_file = logs_dir / "beholder.log"
+
+    logs_dir.mkdir(parents=True, exist_ok=True)
 
     formatter = logging.Formatter(LOG_FORMAT)
 
     file_handler = RotatingFileHandler(
-        LOG_FILE,
+        log_file,
         maxBytes=LOG_MAX_BYTES,
         backupCount=LOG_BACKUP_COUNT,
         encoding="utf-8",
