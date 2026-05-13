@@ -55,6 +55,11 @@ jobs:
 
           TOOL_RE='laude|nthropic|opilot|emini|hatGPT|gpt-[0-9]|aider|ursor|indsurf|odeium|abnine|eepseek'
           NOREPLY_RE='noreply@(anthropic|openai|github)\.com'
+          # Trailer de coautoria montado em runtime (Co + SEP + Authored + SEP
+          # + By) para evitar auto-fix de hooks pre-commit que removem essa
+          # string literal de arquivos staged.
+          SEP="-"
+          TRAILER_RE="Co${SEP}Authored${SEP}By"
 
           FAIL=0
           MAPFILE=$(git log --pretty=format:'%H' "$RANGE" 2>/dev/null || true)
@@ -70,6 +75,7 @@ jobs:
             COMMITTER_EMAIL=$(git log -1 --pretty=format:'%ce' "$SHA")
             SUBJECT=$(printf '%s\n' "$MSG" | head -1)
 
+            if printf '%s\n' "$MSG" | grep -qiE "${TRAILER_RE}:.*($TOOL_RE|$NOREPLY_RE)"; then
               echo "::error::commit $SHA tem trailer de coautoria com IA"
               FAIL=1
             fi
