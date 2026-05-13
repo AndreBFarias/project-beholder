@@ -103,18 +103,25 @@ jobs:
           fi
 
       - name: Instalar flatpak + flatpak-builder
-        # O runner ubuntu-latest nao traz flatpak-builder por padrao; o action
-        # do flatpak-github-actions falha com "flatpak-builder: not found" sem isso.
+        # O runner ubuntu-latest nao traz flatpak-builder por padrao.
         run: |
           sudo apt-get update
           sudo apt-get install -y flatpak flatpak-builder
-          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-      - name: Build via flatpak-github-actions
-        uses: flatpak/flatpak-github-actions/flatpak-builder@v6.5
-        with:
-          bundle: beholder-${{ steps.versao.outputs.valor }}.flatpak
-          manifest-path: com.beholder.app.yml
+      - name: Configurar remote flathub (user-mode)
+        # `flatpak --system install` falha no runner por nao ter root.
+        # Usamos --user para instalar runtime/SDK em ~/.local/share/flatpak.
+        run: |
+          flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak --user install -y flathub org.gnome.Platform//46 org.gnome.Sdk//46
+
+      - name: Build do bundle Flatpak
+        run: |
+          mkdir -p flatpak-build
+          flatpak-builder --user --force-clean --install-deps-from=flathub \
+              --repo=flatpak-repo flatpak-build com.beholder.app.yml
+          flatpak build-bundle flatpak-repo \
+              "beholder-${{ steps.versao.outputs.valor }}.flatpak" com.beholder.app
 
       - name: Upload artefato
         uses: actions/upload-artifact@v4
