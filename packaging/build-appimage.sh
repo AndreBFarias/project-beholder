@@ -86,7 +86,9 @@ cp "${APPDIR}/com.beholder.app.png" \
 
 log "Rodando linuxdeploy..."
 cd "${DIST_DIR}"
-NO_STRIP=1 OUTPUT="Beholder-${VERSAO}-x86_64.AppImage" \
+# ARCH explicito: AppDir tem so codigo Python, sem binario nativo. Sem isso
+# o appimagetool falha com "Unable to guess the architecture".
+NO_STRIP=1 ARCH=x86_64 OUTPUT="Beholder-${VERSAO}-x86_64.AppImage" \
     "${LINUXDEPLOY}" --appdir "${APPDIR}" --output appimage
 
 log "OK: ${DIST_DIR}/Beholder-${VERSAO}-x86_64.AppImage"
