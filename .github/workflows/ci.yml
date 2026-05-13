@@ -20,9 +20,10 @@ jobs:
 
       - name: Instalar dependências (sem GTK)
         run: |
-          pip install ruff pytest pytest-cov
+          pip install ruff pytest pytest-cov pytest-timeout
           pip install requests beautifulsoup4 lxml
           pip install opencv-python Pillow numpy scikit-learn httpx python-dotenv
+          pip install cairosvg
 
       - name: "1/4 — Lint"
         run: |
