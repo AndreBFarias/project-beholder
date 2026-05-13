@@ -34,7 +34,9 @@ jobs:
         run: pytest tests/smoke/ -v --timeout=10
 
       - name: "3/4 — Unit"
-        run: pytest tests/unit/ -v
+        # Exclui testes marcados como requires_display: dependem de PyGObject
+        # (gi.repository.GLib) que so existe no ambiente do desktop.
+        run: pytest tests/unit/ -v -m "not requires_display"
 
       - name: "4/4 — Verificação de anonimato"
         run: |

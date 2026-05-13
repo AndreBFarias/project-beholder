@@ -45,6 +45,7 @@ def mock_paleta(monkeypatch):
     return mock_fn
 
 
+@pytest.mark.requires_display
 def test_cancelamento_encerra_em_3s(filas_teste, mock_glib, monkeypatch):
     """Orchestrator deve encerrar em < 3s quando cancelado com fila vazia."""
     monkeypatch.setattr("src.ai_vision.orchestrator.filas", filas_teste)
@@ -66,6 +67,7 @@ def test_cancelamento_encerra_em_3s(filas_teste, mock_glib, monkeypatch):
     assert encerrou, "Orchestrator não encerrou em 3 segundos após cancelamento"
 
 
+@pytest.mark.requires_display
 def test_sentinel_encerra_normalmente(filas_teste, mock_glib, monkeypatch):
     """Orchestrator encerra ao receber SENTINEL."""
     monkeypatch.setattr("src.ai_vision.orchestrator.filas", filas_teste)
@@ -88,6 +90,7 @@ def test_sentinel_encerra_normalmente(filas_teste, mock_glib, monkeypatch):
     assert total_ref[0] == 0
 
 
+@pytest.mark.requires_display
 def test_processa_asset_antes_de_sentinel(filas_teste, mock_glib, mock_analisar, mock_paleta, monkeypatch, tmp_path):
     """Orchestrator processa asset e chama on_asset."""
     monkeypatch.setattr("src.ai_vision.orchestrator.filas", filas_teste)
